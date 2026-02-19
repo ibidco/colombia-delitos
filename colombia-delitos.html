@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delitos en Colombia — Datos Abiertos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0b0f1a;
+      --card:      #141c2e;
+      --border:    #1e2d4a;
+      --yellow:    #f5c842;
+      --red:       #e03c31;
+      --blue:      #003087;
+      --accent:    #4f9cf9;
+      --text:      #e8ecf4;
+      --muted:     #7a8ba8;
+      --font-head: 'Playfair Display', Georgia, serif;
+      --font-body: 'Source Serif 4', Georgia, serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── HEADER ────────────────────────────────── */
+    header {
+      position: relative;
+      padding: 52px 48px 36px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .flag-stripe {
+      position: absolute; top: 0; left: 0; right: 0; height: 5px;
+      background: linear-gradient(90deg,
+        #f5c842 0% 25%, #003087 25% 50%,
+        #e03c31 50% 75%, #f5c842 75% 100%);
+    }
+
+    .header-inner {
+      max-width: 1440px; margin: 0 auto;
+      display: flex; align-items: flex-end;
+      justify-content: space-between; gap: 24px; flex-wrap: wrap;
+    }
+
+    h1 {
+      font-family: var(--font-head);
+      font-size: clamp(2.2rem, 4vw, 3.8rem);
+      font-weight: 900; letter-spacing: -0.025em; line-height: 1.0;
+    }
+    h1 em { color: var(--yellow); font-style: normal; }
+
+    .subtitle {
+      margin-top: 10px; font-size: 0.95rem;
+      color: var(--muted); font-weight: 300; font-style: italic;
+    }
+
+    .header-right {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+    }
+
+    .btn-refresh {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--yellow); color: #0a0d17; border: none;
+      padding: 11px 24px; font-family: var(--font-mono);
+      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; cursor: pointer;
+      transition: opacity .15s, transform .15s;
+    }
+    .btn-refresh:hover  { opacity: .85; transform: translateY(-1px); }
+    .btn-refresh:active { transform: translateY(0); }
+    .btn-refresh:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .btn-refresh svg { width: 13px; height: 13px; }
+    .btn-refresh.spinning svg { animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .last-updated {
+      font-family: var(--font-mono); font-size: 0.68rem;
+      color: var(--muted); text-align: right;
+    }
+
+    /* ── STATUS ────────────────────────────────── */
+    #status-bar {
+      max-width: 1440px; margin: 0 auto;
+      padding: 14px 48px;
+      display: flex; align-items: center; gap: 10px;
+      font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+      background: var(--muted); transition: background .3s;
+    }
+    .dot.loading { background: var(--yellow); animation: blink 1s ease-in-out infinite; }
+    .dot.ok      { background: #3ddc84; }
+    .dot.error   { background: var(--red); }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+    /* ── MAIN ──────────────────────────────────── */
+    main {
+      max-width: 1440px; margin: 0 auto;
+      padding: 32px 48px 96px;
+    }
+
+    /* ── RESUMEN ───────────────────────────────── */
+    #summary {
+      display: none;
+      grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); margin-bottom: 40px;
+    }
+    .summary-cell { background: var(--card); padding: 18px 22px; }
+    .summary-cell .num {
+      font-family: var(--font-mono); font-size: 1.65rem;
+      font-weight: 600; color: var(--yellow);
+    }
+    .summary-cell .lbl {
+      margin-top: 3px; font-size: 0.7rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.07em;
+    }
+
+    /* ── SECCIÓN ───────────────────────────────── */
+    .section-title {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 22px;
+    }
+    .section-title h2 {
+      font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600;
+      color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.15em; white-space: nowrap;
+    }
+    .section-title hr { flex: 1; border: none; border-top: 1px solid var(--border); }
+
+    /* ── GRID ──────────────────────────────────── */
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 1200px) { #grid { grid-template-columns: repeat(4,1fr); } }
+    @media (max-width: 900px)  { #grid { grid-template-columns: repeat(3,1fr); } }
+    @media (max-width: 600px)  { #grid { grid-template-columns: repeat(2,1fr); } }
+
+    /* ── TARJETA ───────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 14px 14px 10px;
+      position: relative;
+      animation: up .35s ease both;
+      transition: border-color .2s, transform .2s;
+    }
+    .card:hover { border-color: #335580; transform: translateY(-2px); }
+    @keyframes up {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-rank {
+      position: absolute; top: 9px; right: 10px;
+      font-family: var(--font-mono); font-size: 0.58rem; color: var(--border);
+    }
+    .card-name {
+      font-size: 0.67rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.04em; color: var(--text);
+      line-height: 1.35; padding-right: 28px; min-height: 2.4em;
+    }
+    .card-total {
+      font-family: var(--font-mono); font-size: 0.92rem;
+      font-weight: 600; color: var(--yellow); margin: 5px 0 10px;
+    }
+    .card-total span { font-size: 0.58rem; font-weight: 400; color: var(--muted); }
+    .chart-wrap { position: relative; height: 90px; }
+
+    .trend {
+      display: inline-block; margin-top: 7px;
+      font-family: var(--font-mono); font-size: 0.58rem; padding: 2px 6px;
+    }
+    .trend.up   { background: rgba(224,60,49,.12); color: #f87171; }
+    .trend.down { background: rgba(61,220,132,.1);  color: #3ddc84; }
+    .trend.flat { background: rgba(122,139,168,.1); color: var(--muted); }
+
+    /* ── SKELETONS ─────────────────────────────── */
+    .skel {
+      height: 190px;
+      background: linear-gradient(90deg, var(--card) 25%, #192236 50%, var(--card) 75%);
+      background-size: 200%;
+      animation: shimmer 1.4s infinite;
+      border: 1px solid var(--border);
+    }
+    @keyframes shimmer { from{background-position:200% 0} to{background-position:-200% 0} }
+
+    /* ── ERROR ─────────────────────────────────── */
+    #error-box { display: none; padding: 60px 0; text-align: center; }
+    #error-box h2 { font-family: var(--font-head); font-size: 1.6rem; margin-bottom: 10px; }
+    #error-box p  { color: var(--muted); font-size: .9rem; max-width: 520px; margin: 0 auto; }
+    #error-box code {
+      display: block; margin: 20px auto; max-width: 660px;
+      padding: 14px 18px; background: var(--card);
+      border: 1px solid var(--border); font-family: var(--font-mono);
+      font-size: 0.7rem; color: var(--accent);
+      text-align: left; word-break: break-all; white-space: pre-wrap;
+    }
+    .error-hint {
+      margin-top: 16px; font-size: 0.8rem; color: var(--muted);
+      font-family: var(--font-mono);
+    }
+    .error-hint a { color: var(--accent); }
+
+    /* ── FOOTER ────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 22px 48px; text-align: center;
+      font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="flag-stripe"></div>
+  <div class="header-inner">
+    <div>
+      <h1>Delitos en <em>Colombia</em></h1>
+      <p class="subtitle">Conteo histórico de víctimas por categoría · Fiscalía General de la Nación</p>
+    </div>
+    <div class="header-right">
+      <button class="btn-refresh" id="btn-refresh" onclick="loadData()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 4v6h6M23 20v-6h-6"/>
+          <path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/>
+        </svg>
+        Actualizar datos
+      </button>
+      <div class="last-updated" id="last-updated">Fuente: datos.gov.co · Socrata SODA 2.0</div>
+    </div>
+  </div>
+</header>
+
+<div id="status-bar">
+  <div class="dot loading" id="dot"></div>
+  <span id="status-msg">Conectando con datos.gov.co…</span>
+</div>
+
+<main>
+  <div id="summary">
+    <div class="summary-cell"><div class="num" id="s-vic">—</div><div class="lbl">Total víctimas</div></div>
+    <div class="summary-cell"><div class="num" id="s-cat">—</div><div class="lbl">Categorías</div></div>
+    <div class="summary-cell"><div class="num" id="s-years">—</div><div class="lbl">Años de datos</div></div>
+    <div class="summary-cell"><div class="num" id="s-last">—</div><div class="lbl">Último año</div></div>
+    <div class="summary-cell"><div class="num" id="s-peak">—</div><div class="lbl">Año pico</div></div>
+  </div>
+
+  <div class="section-title">
+    <h2>Evolución histórica · de mayor a menor número de víctimas</h2>
+    <hr>
+  </div>
+
+  <div id="grid"></div>
+
+  <div id="error-box">
+    <h2>No se pudieron cargar los datos</h2>
+    <p>
+      El archivo se está abriendo desde <strong>file://</strong>, lo que bloquea las
+      peticiones a APIs externas. Sirve el archivo desde un servidor local:
+    </p>
+    <code id="error-detail"></code>
+    <p class="error-hint">
+      ¿No tienes Python? También puedes usar
+      <a href="https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer" target="_blank">Live Server en VS Code</a>
+      o simplemente subir el HTML a cualquier hosting estático.
+    </p>
+  </div>
+</main>
+
+<footer>
+  Datos:
+  <a href="https://www.datos.gov.co/Justicia-y-Derecho/Conteo-de-V-ctimas-V2/4mnf-va5w" target="_blank">
+    Conteo de Víctimas V2
+  </a>
+  &nbsp;·&nbsp;
+  API:
+  <a href="https://www.datos.gov.co/resource/4mnf-va5w.json" target="_blank">
+    SODA 2.0
+  </a>
+  &nbsp;·&nbsp;
+  Actualización manual con "Actualizar datos"
+</footer>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// ENDPOINT
+// Usamos SODA 2.0 (resource/*.json) porque es el único que tiene CORS abierto.
+// La query SoQL agrupa en el servidor: grupo_delito × a_o_hechos → sum(total)
+// Así descargamos solo ~pocos cientos de filas en lugar de millones.
+//
+// CORS requiere que el archivo se sirva desde http:// (no file://).
+// Instrucciones en el error box si falla.
+// ─────────────────────────────────────────────────────────────────────────────
+const RESOURCE = 'https://www.datos.gov.co/resource/4mnf-va5w.json';
+
+// SoQL: agrupar por categoría y año, sumar víctimas
+function buildUrl(offset = 0) {
+  const params = new URLSearchParams({
+    '$select': 'grupo_delito, a_o_hechos, sum(total_victimas) as total',
+    '$group':  'grupo_delito, a_o_hechos',
+    '$order':  'a_o_hechos ASC',
+    '$limit':  '50000',
+    '$offset': String(offset),
+  });
+  return `${RESOURCE}?${params}`;
+}
+
+const CHARTS = {};
+const $ = id => document.getElementById(id);
+const fmt = n =>
+  n >= 1e6 ? (n/1e6).toFixed(1)+'M' :
+  n >= 1e3 ? (n/1e3).toFixed(0)+'K' :
+  n.toLocaleString('es-CO');
+
+const setStatus = (state, msg) => {
+  $('dot').className = 'dot ' + state;
+  $('status-msg').textContent = msg;
+};
+
+const setBtn = loading => {
+  const b = $('btn-refresh');
+  b.classList.toggle('spinning', loading);
+  b.disabled = loading;
+};
+
+// ── FETCH con paginación ────────────────────────────────────────────────────
+async function fetchAll() {
+  let all = [];
+  let offset = 0;
+  const PAGE = 50000;
+
+  while (true) {
+    const res = await fetch(buildUrl(offset));
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+    const batch = await res.json();
+    if (!Array.isArray(batch) || batch.length === 0) break;
+    all = all.concat(batch);
+    setStatus('loading',
+      `Descargando… ${all.length.toLocaleString()} registros agrupados`);
+    if (batch.length < PAGE) break; // última página
+    offset += PAGE;
+  }
+  return all;
+}
+
+// ── PROCESAR ────────────────────────────────────────────────────────────────
+function buildMap(rows) {
+  // rows: [{ grupo_delito, a_o_hechos, total }, ...]
+  const map = {};
+  for (const r of rows) {
+    const g = (r.grupo_delito || 'SIN CLASIFICAR').trim();
+    const y = parseInt(r.a_o_hechos);
+    const v = parseFloat(r.total) || 0;
+    if (!y || isNaN(y) || y < 2000 || y > new Date().getFullYear() + 1) continue;
+    if (!map[g]) map[g] = {};
+    map[g][y] = (map[g][y] || 0) + v;
+  }
+  return map;
+}
+
+function sortGroups(map) {
+  return Object.entries(map)
+    .map(([name, byYear]) => ({
+      name,
+      byYear,
+      total: Object.values(byYear).reduce((a, b) => a + b, 0),
+    }))
+    .filter(d => d.total > 0)
+    .sort((a, b) => b.total - a.total);
+}
+
+function calcTrend(byYear) {
+  const yrs = Object.keys(byYear).map(Number).sort((a, b) => a - b);
+  if (yrs.length < 2) return 0;
+  const last = byYear[yrs.at(-1)];
+  const prev = byYear[yrs.at(-2)];
+  return prev ? ((last - prev) / prev) * 100 : 0;
+}
+
+// ── RESUMEN ─────────────────────────────────────────────────────────────────
+function renderSummary(groups) {
+  const totalVic = groups.reduce((a, b) => a + b.total, 0);
+  const allYears = [...new Set(
+    groups.flatMap(g => Object.keys(g.byYear).map(Number))
+  )].sort((a, b) => a - b);
+
+  const byYearGlobal = {};
+  for (const g of groups) {
+    for (const [y, v] of Object.entries(g.byYear)) {
+      byYearGlobal[y] = (byYearGlobal[y] || 0) + v;
+    }
+  }
+  const peakYear = Object.entries(byYearGlobal)
+    .sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+
+  $('s-vic').textContent   = fmt(totalVic);
+  $('s-cat').textContent   = groups.length;
+  $('s-years').textContent = allYears.length;
+  $('s-last').textContent  = allYears.at(-1) || '—';
+  $('s-peak').textContent  = peakYear;
+  $('summary').style.display = 'grid';
+}
+
+// ── GRID ────────────────────────────────────────────────────────────────────
+function renderGrid(groups) {
+  const grid = $('grid');
+  grid.innerHTML = '';
+
+  groups.forEach((g, i) => {
+    const years  = Object.keys(g.byYear).map(Number).sort((a, b) => a - b);
+    const values = years.map(y => g.byYear[y]);
+    const t      = calcTrend(g.byYear);
+    const cid    = `ch${i}`;
+
+    const tClass = t > 5 ? 'up' : t < -5 ? 'down' : 'flat';
+    const tLabel = t > 5
+      ? `▲ +${t.toFixed(0)}% último año`
+      : t < -5
+        ? `▼ ${t.toFixed(0)}% último año`
+        : '— estable';
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.animationDelay = `${(i % 5) * 0.05}s`;
+    card.innerHTML = `
+      <span class="card-rank">#${i + 1}</span>
+      <div class="card-name">${g.name}</div>
+      <div class="card-total">${fmt(g.total)} <span>víctimas</span></div>
+      <div class="chart-wrap"><canvas id="${cid}"></canvas></div>
+      <span class="trend ${tClass}">${tLabel}</span>
+    `;
+    grid.appendChild(card);
+    requestAnimationFrame(() => drawChart(cid, years, values, t));
+  });
+}
+
+// ── CHART ────────────────────────────────────────────────────────────────────
+function drawChart(id, years, values, t) {
+  if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; }
+  const el = $(id);
+  if (!el) return;
+  const ctx = el.getContext('2d');
+
+  const color = t > 5 ? '#f87171' : t < -5 ? '#3ddc84' : '#4f9cf9';
+  const grad  = ctx.createLinearGradient(0, 0, 0, 90);
+  grad.addColorStop(0, color + '28');
+  grad.addColorStop(1, color + '00');
+
+  CHARTS[id] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: [{
+        data: values,
+        borderColor: color,
+        borderWidth: 1.5,
+        backgroundColor: grad,
+        fill: true,
+        tension: 0.35,
+        pointRadius: years.length > 8 ? 0 : 2,
+        pointHoverRadius: 4,
+        pointBackgroundColor: color,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 500 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a2540',
+          titleColor: '#7a8ba8',
+          bodyColor: '#e8ecf4',
+          bodyFont:  { family: 'JetBrains Mono', size: 11 },
+          titleFont: { family: 'JetBrains Mono', size: 10 },
+          callbacks: {
+            label: c => ' ' + c.parsed.y.toLocaleString('es-CO') + ' víctimas',
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: '#1a2540', lineWidth: 0.5 },
+          ticks: {
+            color: '#7a8ba8',
+            font: { family: 'JetBrains Mono', size: 8 },
+            maxTicksLimit: 5, maxRotation: 0,
+          },
+        },
+        y: {
+          grid: { color: '#1a2540', lineWidth: 0.5 },
+          ticks: {
+            color: '#7a8ba8',
+            font: { family: 'JetBrains Mono', size: 8 },
+            maxTicksLimit: 4,
+            callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'K' : v,
+          },
+          beginAtZero: false,
+        },
+      },
+    },
+  });
+}
+
+// ── MAIN ─────────────────────────────────────────────────────────────────────
+async function loadData() {
+  const grid     = $('grid');
+  const errorBox = $('error-box');
+
+  setBtn(true);
+  setStatus('loading', 'Conectando con datos.gov.co…');
+  errorBox.style.display = 'none';
+  $('summary').style.display = 'none';
+
+  grid.innerHTML = '';
+  for (let i = 0; i < 15; i++) {
+    const sk = document.createElement('div');
+    sk.className = 'skel';
+    grid.appendChild(sk);
+  }
+
+  try {
+    const rows = await fetchAll();
+    if (!rows.length) throw new Error('El API devolvió 0 registros');
+
+    setStatus('loading', `Procesando ${rows.length.toLocaleString()} registros…`);
+    const map    = buildMap(rows);
+    const groups = sortGroups(map);
+    if (!groups.length) throw new Error('No se encontraron categorías de delito');
+
+    renderSummary(groups);
+    grid.innerHTML = '';
+    renderGrid(groups);
+
+    const now = new Date().toLocaleString('es-CO', {
+      dateStyle: 'long', timeStyle: 'short',
+    });
+    setStatus('ok',
+      `${rows.length.toLocaleString()} registros · ${groups.length} categorías`);
+    $('last-updated').textContent = `Actualizado: ${now}`;
+
+  } catch (err) {
+    console.error(err);
+    grid.innerHTML = '';
+    setStatus('error', 'Error al cargar datos');
+    errorBox.style.display = 'block';
+
+    const isCors = err.message.includes('fetch') || err.message.includes('Failed');
+    $('error-detail').textContent = isCors
+      ? [
+          'Bloqueado por CORS (origin: null).',
+          '',
+          'Solución: sirve el archivo desde un servidor local.',
+          '',
+          'Opción 1 — Python (recomendado):',
+          '  cd carpeta-donde-esta-el-html',
+          '  python3 -m http.server 8080',
+          '  → Abre http://localhost:8080/colombia-delitos.html',
+          '',
+          'Opción 2 — Node.js:',
+          '  npx serve .',
+          '  → Abre la URL que indica la terminal',
+          '',
+          'Opción 3 — VS Code:',
+          '  Instala "Live Server" y abre con clic derecho → Open with Live Server',
+        ].join('\n')
+      : `Error: ${err.message}\n\nURL: ${buildUrl(0)}`;
+  } finally {
+    setBtn(false);
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
