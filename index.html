@@ -89,6 +89,9 @@
     .btn-refresh.spinning svg { animation: spin .7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* Oculto por defecto — solo visible en modo admin */
+    #btn-refresh { display: none; }
+
     .last-updated {
       font-family: var(--font-mono); font-size: 0.65rem;
       color: var(--muted); text-align: right;
@@ -330,6 +333,16 @@
 // No existe un campo de mes en la fuente de datos.
 // Para evitar la caída visual del año actual (incompleto), lo excluimos.
 // El año "último completo" es el año anterior al actual.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── MODO ADMIN ────────────────────────────────────────────────────────────────
+// El botón "Actualizar datos" solo aparece si la URL contiene ?admin=TUCLAVE
+// Ejemplo: https://tu-sitio.vercel.app?admin=colombia2024***
+// Cambia "colombia2024***" por la clave que tú quieras. Solo tú la conoces.
+const ADMIN_KEY = 'colombia2026***';
+if (new URLSearchParams(window.location.search).get('admin') === ADMIN_KEY) {
+  document.getElementById('btn-refresh').style.display = 'inline-flex';
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 const RESOURCE   = 'https://www.datos.gov.co/resource/4mnf-va5w.json';
