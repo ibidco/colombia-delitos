@@ -16,7 +16,6 @@
       --border:    #1e2d4a;
       --yellow:    #f5c842;
       --red:       #e03c31;
-      --blue:      #003087;
       --accent:    #4f9cf9;
       --text:      #e8ecf4;
       --muted:     #7a8ba8;
@@ -33,16 +32,15 @@
     }
 
     body::before {
-      content: '';
-      position: fixed; inset: 0;
+      content: ''; position: fixed; inset: 0;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
       pointer-events: none; z-index: 0;
     }
 
-    /* ── HEADER ────────────────────────────────── */
+    /* ── HEADER ─────────────────────────────────────── */
     header {
       position: relative;
-      padding: 52px 48px 36px;
+      padding: 48px 32px 32px;
       border-bottom: 1px solid var(--border);
     }
 
@@ -54,110 +52,124 @@
     }
 
     .header-inner {
-      max-width: 1440px; margin: 0 auto;
+      max-width: 1600px; margin: 0 auto;
       display: flex; align-items: flex-end;
-      justify-content: space-between; gap: 24px; flex-wrap: wrap;
+      justify-content: space-between; gap: 20px; flex-wrap: wrap;
     }
 
     h1 {
       font-family: var(--font-head);
-      font-size: clamp(2.2rem, 4vw, 3.8rem);
+      font-size: clamp(1.8rem, 4vw, 3.6rem);
       font-weight: 900; letter-spacing: -0.025em; line-height: 1.0;
     }
     h1 em { color: var(--yellow); font-style: normal; }
 
     .subtitle {
-      margin-top: 10px; font-size: 0.95rem;
+      margin-top: 8px; font-size: 0.9rem;
       color: var(--muted); font-weight: 300; font-style: italic;
     }
 
     .header-right {
-      display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
     }
 
     .btn-refresh {
       display: inline-flex; align-items: center; gap: 8px;
       background: var(--yellow); color: #0a0d17; border: none;
-      padding: 11px 24px; font-family: var(--font-mono);
-      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em;
+      padding: 10px 20px; font-family: var(--font-mono);
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em;
       text-transform: uppercase; cursor: pointer;
       transition: opacity .15s, transform .15s;
+      white-space: nowrap;
     }
     .btn-refresh:hover  { opacity: .85; transform: translateY(-1px); }
     .btn-refresh:active { transform: translateY(0); }
     .btn-refresh:disabled { opacity: .4; cursor: not-allowed; transform: none; }
-    .btn-refresh svg { width: 13px; height: 13px; }
+    .btn-refresh svg { width: 13px; height: 13px; flex-shrink: 0; }
     .btn-refresh.spinning svg { animation: spin .7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .last-updated {
-      font-family: var(--font-mono); font-size: 0.68rem;
+      font-family: var(--font-mono); font-size: 0.65rem;
       color: var(--muted); text-align: right;
     }
 
-    /* ── STATUS ────────────────────────────────── */
+    /* ── STATUS BAR ─────────────────────────────────── */
     #status-bar {
-      max-width: 1440px; margin: 0 auto;
-      padding: 14px 48px;
+      max-width: 1600px; margin: 0 auto;
+      padding: 12px 32px;
       display: flex; align-items: center; gap: 10px;
-      font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted);
+      font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted);
       border-bottom: 1px solid var(--border);
     }
 
     .dot {
       width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
-      background: var(--muted); transition: background .3s;
+      background: var(--muted);
     }
     .dot.loading { background: var(--yellow); animation: blink 1s ease-in-out infinite; }
     .dot.ok      { background: #3ddc84; }
     .dot.error   { background: var(--red); }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
 
-    /* ── MAIN ──────────────────────────────────── */
+    /* ── MAIN ───────────────────────────────────────── */
     main {
-      max-width: 1440px; margin: 0 auto;
-      padding: 32px 48px 96px;
+      max-width: 1600px; margin: 0 auto;
+      padding: 28px 32px 80px;
     }
 
-    /* ── RESUMEN ───────────────────────────────── */
+    /* ── RESUMEN ────────────────────────────────────── */
     #summary {
       display: none;
-      grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+      grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
       gap: 1px; background: var(--border);
-      border: 1px solid var(--border); margin-bottom: 40px;
+      border: 1px solid var(--border); margin-bottom: 32px;
     }
-    .summary-cell { background: var(--card); padding: 18px 22px; }
+    .summary-cell { background: var(--card); padding: 16px 20px; }
     .summary-cell .num {
-      font-family: var(--font-mono); font-size: 1.65rem;
+      font-family: var(--font-mono); font-size: 1.5rem;
       font-weight: 600; color: var(--yellow);
     }
     .summary-cell .lbl {
-      margin-top: 3px; font-size: 0.7rem; color: var(--muted);
+      margin-top: 3px; font-size: 0.65rem; color: var(--muted);
       text-transform: uppercase; letter-spacing: 0.07em;
     }
 
-    /* ── SECCIÓN ───────────────────────────────── */
+    /* ── SECCIÓN ────────────────────────────────────── */
     .section-title {
-      display: flex; align-items: center; gap: 16px; margin-bottom: 22px;
+      display: flex; align-items: center; gap: 14px; margin-bottom: 20px;
     }
     .section-title h2 {
-      font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600;
+      font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600;
       color: var(--muted); text-transform: uppercase;
       letter-spacing: 0.15em; white-space: nowrap;
     }
     .section-title hr { flex: 1; border: none; border-top: 1px solid var(--border); }
 
-    /* ── GRID ──────────────────────────────────── */
+    /* ── GRID: responsive 1-4 columnas ─────────────── */
     #grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 14px;
+      gap: 12px;
+      /* Por defecto en pantallas pequeñas: 1 columna */
+      grid-template-columns: 1fr;
     }
-    @media (max-width: 1200px) { #grid { grid-template-columns: repeat(4,1fr); } }
-    @media (max-width: 900px)  { #grid { grid-template-columns: repeat(3,1fr); } }
-    @media (max-width: 600px)  { #grid { grid-template-columns: repeat(2,1fr); } }
 
-    /* ── TARJETA ───────────────────────────────── */
+    /* ≥ 480px → 2 columnas */
+    @media (min-width: 480px) {
+      #grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ≥ 860px → 3 columnas */
+    @media (min-width: 860px) {
+      #grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* ≥ 1180px → 4 columnas (máximo) */
+    @media (min-width: 1180px) {
+      #grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    /* ── TARJETA ────────────────────────────────────── */
     .card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -168,37 +180,52 @@
     }
     .card:hover { border-color: #335580; transform: translateY(-2px); }
     @keyframes up {
-      from { opacity: 0; transform: translateY(14px); }
+      from { opacity: 0; transform: translateY(12px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
     .card-rank {
       position: absolute; top: 9px; right: 10px;
-      font-family: var(--font-mono); font-size: 0.58rem; color: var(--border);
+      font-family: var(--font-mono); font-size: 0.55rem; color: var(--border);
     }
+
     .card-name {
-      font-size: 0.67rem; font-weight: 600; text-transform: uppercase;
+      font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
       letter-spacing: 0.04em; color: var(--text);
-      line-height: 1.35; padding-right: 28px; min-height: 2.4em;
+      line-height: 1.35; padding-right: 30px; min-height: 2.4em;
     }
+
     .card-total {
-      font-family: var(--font-mono); font-size: 0.92rem;
+      font-family: var(--font-mono); font-size: 0.88rem;
       font-weight: 600; color: var(--yellow); margin: 5px 0 10px;
     }
-    .card-total span { font-size: 0.58rem; font-weight: 400; color: var(--muted); }
-    .chart-wrap { position: relative; height: 90px; }
+    .card-total span { font-size: 0.55rem; font-weight: 400; color: var(--muted); }
+
+    /* El gráfico es un poco más alto para que el punto rojo se vea bien */
+    .chart-wrap { position: relative; height: 100px; }
 
     .trend {
       display: inline-block; margin-top: 7px;
-      font-family: var(--font-mono); font-size: 0.58rem; padding: 2px 6px;
+      font-family: var(--font-mono); font-size: 0.55rem; padding: 2px 6px;
     }
     .trend.up   { background: rgba(224,60,49,.12); color: #f87171; }
     .trend.down { background: rgba(61,220,132,.1);  color: #3ddc84; }
     .trend.flat { background: rgba(122,139,168,.1); color: var(--muted); }
 
-    /* ── SKELETONS ─────────────────────────────── */
+    /* Leyenda del punto pico */
+    .peak-label {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--font-mono); font-size: 0.52rem;
+      color: var(--muted); margin-top: 4px; margin-left: 6px;
+    }
+    .peak-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--red); flex-shrink: 0;
+    }
+
+    /* ── SKELETONS ──────────────────────────────────── */
     .skel {
-      height: 190px;
+      height: 185px;
       background: linear-gradient(90deg, var(--card) 25%, #192236 50%, var(--card) 75%);
       background-size: 200%;
       animation: shimmer 1.4s infinite;
@@ -206,31 +233,34 @@
     }
     @keyframes shimmer { from{background-position:200% 0} to{background-position:-200% 0} }
 
-    /* ── ERROR ─────────────────────────────────── */
+    /* ── ERROR ──────────────────────────────────────── */
     #error-box { display: none; padding: 60px 0; text-align: center; }
-    #error-box h2 { font-family: var(--font-head); font-size: 1.6rem; margin-bottom: 10px; }
-    #error-box p  { color: var(--muted); font-size: .9rem; max-width: 520px; margin: 0 auto; }
+    #error-box h2 { font-family: var(--font-head); font-size: 1.5rem; margin-bottom: 10px; }
+    #error-box p  { color: var(--muted); font-size: .88rem; max-width: 480px; margin: 0 auto; }
     #error-box code {
-      display: block; margin: 20px auto; max-width: 660px;
-      padding: 14px 18px; background: var(--card);
+      display: block; margin: 18px auto; max-width: 600px;
+      padding: 12px 16px; background: var(--card);
       border: 1px solid var(--border); font-family: var(--font-mono);
-      font-size: 0.7rem; color: var(--accent);
+      font-size: 0.68rem; color: var(--accent);
       text-align: left; word-break: break-all; white-space: pre-wrap;
     }
-    .error-hint {
-      margin-top: 16px; font-size: 0.8rem; color: var(--muted);
-      font-family: var(--font-mono);
-    }
-    .error-hint a { color: var(--accent); }
 
-    /* ── FOOTER ────────────────────────────────── */
+    /* ── FOOTER ─────────────────────────────────────── */
     footer {
       border-top: 1px solid var(--border);
-      padding: 22px 48px; text-align: center;
-      font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted);
+      padding: 20px 32px; text-align: center;
+      font-family: var(--font-mono); font-size: 0.65rem; color: var(--muted);
     }
     footer a { color: var(--accent); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
+
+    /* ── MOBILE HEADER ADJUSTMENTS ──────────────────── */
+    @media (max-width: 600px) {
+      header { padding: 40px 20px 24px; }
+      main   { padding: 20px 16px 60px; }
+      #status-bar { padding: 10px 20px; }
+      .header-right { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
+    }
   </style>
 </head>
 <body>
@@ -240,10 +270,10 @@
   <div class="header-inner">
     <div>
       <h1>Delitos en <em>Colombia</em></h1>
-      <p class="subtitle">Conteo histórico de víctimas por categoría · Fiscalía General de la Nación</p>
+      <p class="subtitle">Víctimas por categoría · Evolución anual · Fiscalía General de la Nación</p>
     </div>
     <div class="header-right">
-      <button class="btn-refresh" id="btn-refresh" onclick="loadData()">
+      <button class="btn-refresh" id="btn-refresh" onclick="loadData(true)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
              stroke-linecap="round" stroke-linejoin="round">
           <path d="M1 4v6h6M23 20v-6h-6"/>
@@ -266,12 +296,12 @@
     <div class="summary-cell"><div class="num" id="s-vic">—</div><div class="lbl">Total víctimas</div></div>
     <div class="summary-cell"><div class="num" id="s-cat">—</div><div class="lbl">Categorías</div></div>
     <div class="summary-cell"><div class="num" id="s-years">—</div><div class="lbl">Años de datos</div></div>
-    <div class="summary-cell"><div class="num" id="s-last">—</div><div class="lbl">Último año</div></div>
-    <div class="summary-cell"><div class="num" id="s-peak">—</div><div class="lbl">Año pico</div></div>
+    <div class="summary-cell"><div class="num" id="s-first">—</div><div class="lbl">Primer año</div></div>
+    <div class="summary-cell"><div class="num" id="s-last">—</div><div class="lbl">Último año completo</div></div>
   </div>
 
   <div class="section-title">
-    <h2>Evolución histórica · de mayor a menor número de víctimas</h2>
+    <h2>Evolución anual por categoría · de mayor a menor · punto rojo = peak histórico</h2>
     <hr>
   </div>
 
@@ -279,46 +309,34 @@
 
   <div id="error-box">
     <h2>No se pudieron cargar los datos</h2>
-    <p>
-      El archivo se está abriendo desde <strong>file://</strong>, lo que bloquea las
-      peticiones a APIs externas. Sirve el archivo desde un servidor local:
-    </p>
+    <p>Verifica tu conexión a internet e intenta de nuevo.</p>
     <code id="error-detail"></code>
-    <p class="error-hint">
-      ¿No tienes Python? También puedes usar
-      <a href="https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer" target="_blank">Live Server en VS Code</a>
-      o simplemente subir el HTML a cualquier hosting estático.
-    </p>
   </div>
 </main>
 
 <footer>
   Datos:
-  <a href="https://www.datos.gov.co/Justicia-y-Derecho/Conteo-de-V-ctimas-V2/4mnf-va5w" target="_blank">
-    Conteo de Víctimas V2
-  </a>
+  <a href="https://www.datos.gov.co/Justicia-y-Derecho/Conteo-de-V-ctimas-V2/4mnf-va5w" target="_blank">Conteo de Víctimas V2</a>
   &nbsp;·&nbsp;
-  API:
-  <a href="https://www.datos.gov.co/resource/4mnf-va5w.json" target="_blank">
-    SODA 2.0
-  </a>
+  Fuente: Fiscalía General de la Nación
   &nbsp;·&nbsp;
-  Actualización manual con "Actualizar datos"
+  <a href="https://www.datos.gov.co/resource/4mnf-va5w.json" target="_blank">API SODA 2.0</a>
 </footer>
 
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
-// ENDPOINT
-// Usamos SODA 2.0 (resource/*.json) porque es el único que tiene CORS abierto.
-// La query SoQL agrupa en el servidor: grupo_delito × a_o_hechos → sum(total)
-// Así descargamos solo ~pocos cientos de filas en lugar de millones.
-//
-// CORS requiere que el archivo se sirva desde http:// (no file://).
-// Instrucciones en el error box si falla.
+// NOTA TÉCNICA:
+// El dataset solo tiene granularidad ANUAL (campo: a_o_hechos).
+// No existe un campo de mes en la fuente de datos.
+// Para evitar la caída visual del año actual (incompleto), lo excluimos.
+// El año "último completo" es el año anterior al actual.
 // ─────────────────────────────────────────────────────────────────────────────
-const RESOURCE = 'https://www.datos.gov.co/resource/4mnf-va5w.json';
 
-// SoQL: agrupar por categoría y año, sumar víctimas
+const RESOURCE   = 'https://www.datos.gov.co/resource/4mnf-va5w.json';
+const THIS_YEAR  = new Date().getFullYear();
+// Excluir el año actual porque solo tiene datos parciales
+const MAX_YEAR   = THIS_YEAR - 1;
+
 function buildUrl(offset = 0) {
   const params = new URLSearchParams({
     '$select': 'grupo_delito, a_o_hechos, sum(total_victimas) as total',
@@ -331,14 +349,14 @@ function buildUrl(offset = 0) {
 }
 
 const CHARTS = {};
-const $ = id => document.getElementById(id);
-const fmt = n =>
+const $      = id => document.getElementById(id);
+const fmt    = n =>
   n >= 1e6 ? (n/1e6).toFixed(1)+'M' :
   n >= 1e3 ? (n/1e3).toFixed(0)+'K' :
   n.toLocaleString('es-CO');
 
 const setStatus = (state, msg) => {
-  $('dot').className = 'dot ' + state;
+  $('dot').className   = 'dot ' + state;
   $('status-msg').textContent = msg;
 };
 
@@ -348,35 +366,33 @@ const setBtn = loading => {
   b.disabled = loading;
 };
 
-// ── FETCH con paginación ────────────────────────────────────────────────────
+// ── FETCH con paginación ──────────────────────────────────────────────────────
 async function fetchAll() {
-  let all = [];
-  let offset = 0;
-  const PAGE = 50000;
-
+  let all = [], offset = 0;
   while (true) {
-    const res = await fetch(buildUrl(offset));
+    const res   = await fetch(buildUrl(offset));
     if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
     const batch = await res.json();
-    if (!Array.isArray(batch) || batch.length === 0) break;
+    if (!Array.isArray(batch) || !batch.length) break;
     all = all.concat(batch);
-    setStatus('loading',
-      `Descargando… ${all.length.toLocaleString()} registros agrupados`);
-    if (batch.length < PAGE) break; // última página
-    offset += PAGE;
+    setStatus('loading', `Descargando… ${all.length.toLocaleString()} registros`);
+    if (batch.length < 50000) break;
+    offset += 50000;
   }
   return all;
 }
 
-// ── PROCESAR ────────────────────────────────────────────────────────────────
+// ── PROCESAR ──────────────────────────────────────────────────────────────────
 function buildMap(rows) {
-  // rows: [{ grupo_delito, a_o_hechos, total }, ...]
   const map = {};
   for (const r of rows) {
     const g = (r.grupo_delito || 'SIN CLASIFICAR').trim();
     const y = parseInt(r.a_o_hechos);
     const v = parseFloat(r.total) || 0;
-    if (!y || isNaN(y) || y < 2000 || y > new Date().getFullYear() + 1) continue;
+
+    // Solo años válidos y hasta el último año completo
+    if (!y || isNaN(y) || y < 2000 || y > MAX_YEAR) continue;
+
     if (!map[g]) map[g] = {};
     map[g][y] = (map[g][y] || 0) + v;
   }
@@ -394,6 +410,7 @@ function sortGroups(map) {
     .sort((a, b) => b.total - a.total);
 }
 
+// ── TENDENCIA: último vs penúltimo año disponible ─────────────────────────────
 function calcTrend(byYear) {
   const yrs = Object.keys(byYear).map(Number).sort((a, b) => a - b);
   if (yrs.length < 2) return 0;
@@ -402,40 +419,33 @@ function calcTrend(byYear) {
   return prev ? ((last - prev) / prev) * 100 : 0;
 }
 
-// ── RESUMEN ─────────────────────────────────────────────────────────────────
+// ── RESUMEN ───────────────────────────────────────────────────────────────────
 function renderSummary(groups) {
-  const totalVic = groups.reduce((a, b) => a + b.total, 0);
-  const allYears = [...new Set(
+  const totalVic  = groups.reduce((a, b) => a + b.total, 0);
+  const allYears  = [...new Set(
     groups.flatMap(g => Object.keys(g.byYear).map(Number))
   )].sort((a, b) => a - b);
-
-  const byYearGlobal = {};
-  for (const g of groups) {
-    for (const [y, v] of Object.entries(g.byYear)) {
-      byYearGlobal[y] = (byYearGlobal[y] || 0) + v;
-    }
-  }
-  const peakYear = Object.entries(byYearGlobal)
-    .sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
 
   $('s-vic').textContent   = fmt(totalVic);
   $('s-cat').textContent   = groups.length;
   $('s-years').textContent = allYears.length;
+  $('s-first').textContent = allYears.at(0)  || '—';
   $('s-last').textContent  = allYears.at(-1) || '—';
-  $('s-peak').textContent  = peakYear;
   $('summary').style.display = 'grid';
 }
 
-// ── GRID ────────────────────────────────────────────────────────────────────
+// ── GRID ──────────────────────────────────────────────────────────────────────
 function renderGrid(groups) {
   const grid = $('grid');
   grid.innerHTML = '';
 
   groups.forEach((g, i) => {
-    const years  = Object.keys(g.byYear).map(Number).sort((a, b) => a - b);
-    const values = years.map(y => g.byYear[y]);
-    const t      = calcTrend(g.byYear);
-    const cid    = `ch${i}`;
+    const years   = Object.keys(g.byYear).map(Number).sort((a, b) => a - b);
+    const values  = years.map(y => g.byYear[y]);
+    const peakIdx = values.indexOf(Math.max(...values));
+    const peakYear = years[peakIdx];
+    const t       = calcTrend(g.byYear);
+    const cid     = `ch${i}`;
 
     const tClass = t > 5 ? 'up' : t < -5 ? 'down' : 'flat';
     const tLabel = t > 5
@@ -446,30 +456,44 @@ function renderGrid(groups) {
 
     const card = document.createElement('div');
     card.className = 'card';
-    card.style.animationDelay = `${(i % 5) * 0.05}s`;
+    card.style.animationDelay = `${(i % 4) * 0.05}s`;
     card.innerHTML = `
       <span class="card-rank">#${i + 1}</span>
       <div class="card-name">${g.name}</div>
-      <div class="card-total">${fmt(g.total)} <span>víctimas</span></div>
+      <div class="card-total">${fmt(g.total)} <span>víctimas totales</span></div>
       <div class="chart-wrap"><canvas id="${cid}"></canvas></div>
       <span class="trend ${tClass}">${tLabel}</span>
+      <span class="peak-label">
+        <span class="peak-dot"></span>peak ${peakYear}: ${fmt(values[peakIdx])}
+      </span>
     `;
     grid.appendChild(card);
-    requestAnimationFrame(() => drawChart(cid, years, values, t));
+    requestAnimationFrame(() => drawChart(cid, years, values, peakIdx, t));
   });
 }
 
-// ── CHART ────────────────────────────────────────────────────────────────────
-function drawChart(id, years, values, t) {
+// ── CHART con punto rojo en el peak ───────────────────────────────────────────
+function drawChart(id, years, values, peakIdx, t) {
   if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; }
   const el = $(id);
   if (!el) return;
   const ctx = el.getContext('2d');
 
-  const color = t > 5 ? '#f87171' : t < -5 ? '#3ddc84' : '#4f9cf9';
-  const grad  = ctx.createLinearGradient(0, 0, 0, 90);
-  grad.addColorStop(0, color + '28');
-  grad.addColorStop(1, color + '00');
+  // Color de la línea según tendencia
+  const lineColor = t > 5 ? '#f87171' : t < -5 ? '#3ddc84' : '#4f9cf9';
+
+  // Degradado de relleno
+  const grad = ctx.createLinearGradient(0, 0, 0, 100);
+  grad.addColorStop(0, lineColor + '22');
+  grad.addColorStop(1, lineColor + '00');
+
+  // Arrays punto a punto:
+  // - Todos los puntos son invisibles (radius 0)
+  // - Excepto el peak: punto rojo de radius 5
+  const pointRadius = values.map((_, i) => i === peakIdx ? 5 : 0);
+  const pointColors = values.map((_, i) => i === peakIdx ? '#e03c31' : lineColor);
+  const pointBorder = values.map((_, i) => i === peakIdx ? '#ff6b6b' : lineColor);
+  const pointHover  = values.map((_, i) => i === peakIdx ? 7 : 3);
 
   CHARTS[id] = new Chart(ctx, {
     type: 'line',
@@ -477,14 +501,17 @@ function drawChart(id, years, values, t) {
       labels: years,
       datasets: [{
         data: values,
-        borderColor: color,
+        borderColor: lineColor,
         borderWidth: 1.5,
         backgroundColor: grad,
         fill: true,
         tension: 0.35,
-        pointRadius: years.length > 8 ? 0 : 2,
-        pointHoverRadius: 4,
-        pointBackgroundColor: color,
+        // Puntos individuales por índice
+        pointRadius:          pointRadius,
+        pointHoverRadius:     pointHover,
+        pointBackgroundColor: pointColors,
+        pointBorderColor:     pointBorder,
+        pointBorderWidth:     2,
       }],
     },
     options: {
@@ -500,7 +527,10 @@ function drawChart(id, years, values, t) {
           bodyFont:  { family: 'JetBrains Mono', size: 11 },
           titleFont: { family: 'JetBrains Mono', size: 10 },
           callbacks: {
-            label: c => ' ' + c.parsed.y.toLocaleString('es-CO') + ' víctimas',
+            label: c => {
+              const isPeak = c.dataIndex === peakIdx;
+              return ` ${c.parsed.y.toLocaleString('es-CO')} víctimas${isPeak ? ' 🔴 PEAK' : ''}`;
+            },
           },
         },
       },
@@ -510,7 +540,8 @@ function drawChart(id, years, values, t) {
           ticks: {
             color: '#7a8ba8',
             font: { family: 'JetBrains Mono', size: 8 },
-            maxTicksLimit: 5, maxRotation: 0,
+            maxTicksLimit: 6,
+            maxRotation: 0,
           },
         },
         y: {
@@ -519,7 +550,7 @@ function drawChart(id, years, values, t) {
             color: '#7a8ba8',
             font: { family: 'JetBrains Mono', size: 8 },
             maxTicksLimit: 4,
-            callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'K' : v,
+            callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v,
           },
           beginAtZero: false,
         },
@@ -528,18 +559,19 @@ function drawChart(id, years, values, t) {
   });
 }
 
-// ── MAIN ─────────────────────────────────────────────────────────────────────
-async function loadData() {
+// ── MAIN ──────────────────────────────────────────────────────────────────────
+async function loadData(force = false) {
   const grid     = $('grid');
   const errorBox = $('error-box');
 
   setBtn(true);
   setStatus('loading', 'Conectando con datos.gov.co…');
-  errorBox.style.display = 'none';
+  errorBox.style.display   = 'none';
   $('summary').style.display = 'none';
 
+  // Skeletons mientras carga
   grid.innerHTML = '';
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 8; i++) {
     const sk = document.createElement('div');
     sk.className = 'skel';
     grid.appendChild(sk);
@@ -552,45 +584,22 @@ async function loadData() {
     setStatus('loading', `Procesando ${rows.length.toLocaleString()} registros…`);
     const map    = buildMap(rows);
     const groups = sortGroups(map);
-    if (!groups.length) throw new Error('No se encontraron categorías de delito');
+    if (!groups.length) throw new Error('No se encontraron categorías válidas');
 
     renderSummary(groups);
     grid.innerHTML = '';
     renderGrid(groups);
 
-    const now = new Date().toLocaleString('es-CO', {
-      dateStyle: 'long', timeStyle: 'short',
-    });
-    setStatus('ok',
-      `${rows.length.toLocaleString()} registros · ${groups.length} categorías`);
-    $('last-updated').textContent = `Actualizado: ${now}`;
+    const now = new Date().toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' });
+    setStatus('ok', `${rows.length.toLocaleString()} registros · ${groups.length} categorías · datos hasta ${MAX_YEAR}`);
+    $('last-updated').textContent = `Actualizado: ${now} · años 2000–${MAX_YEAR}`;
 
   } catch (err) {
     console.error(err);
     grid.innerHTML = '';
     setStatus('error', 'Error al cargar datos');
     errorBox.style.display = 'block';
-
-    const isCors = err.message.includes('fetch') || err.message.includes('Failed');
-    $('error-detail').textContent = isCors
-      ? [
-          'Bloqueado por CORS (origin: null).',
-          '',
-          'Solución: sirve el archivo desde un servidor local.',
-          '',
-          'Opción 1 — Python (recomendado):',
-          '  cd carpeta-donde-esta-el-html',
-          '  python3 -m http.server 8080',
-          '  → Abre http://localhost:8080/colombia-delitos.html',
-          '',
-          'Opción 2 — Node.js:',
-          '  npx serve .',
-          '  → Abre la URL que indica la terminal',
-          '',
-          'Opción 3 — VS Code:',
-          '  Instala "Live Server" y abre con clic derecho → Open with Live Server',
-        ].join('\n')
-      : `Error: ${err.message}\n\nURL: ${buildUrl(0)}`;
+    $('error-detail').textContent = `Error: ${err.message}\n\nURL: ${buildUrl(0)}`;
   } finally {
     setBtn(false);
   }
