@@ -225,6 +225,26 @@
     .chart-med   { position: relative; height: 260px; }
     .chart-short { position: relative; height: 200px; }
 
+    /* ── TOGGLE GLOBAL (tasa / absoluto) ───────── */
+    .global-toggle {
+      display: flex; gap: 0; border: 1px solid var(--border);
+      overflow: hidden; margin-bottom: 20px;
+    }
+    .global-toggle button {
+      flex: 1; padding: 11px 20px;
+      font-family: var(--font-mono); font-size: 0.68rem;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; transition: background .15s, color .15s;
+    }
+    .global-toggle button.active { background: var(--accent); color: var(--bg); font-weight: 600; }
+    .global-toggle button:not(.active):hover { background: var(--card2); color: var(--text); }
+    .toggle-note {
+      padding: 11px 16px; font-family: var(--font-mono); font-size: 0.58rem;
+      color: var(--muted); display: flex; align-items: center;
+      border-left: 1px solid var(--border); font-style: italic;
+    }
+
     /* ── DEPTO: toggle tasa/absoluto ───────────── */
     .depto-toggle {
       display: flex; gap: 0;
@@ -359,6 +379,13 @@
         <div id="result-name">—</div>
       </div>
       <button class="btn-clear" onclick="clearResult()">✕ Nueva búsqueda</button>
+    </div>
+
+    <!-- Toggle global tasa/absoluto -->
+    <div class="global-toggle">
+      <button id="gbtn-tasa"     onclick="setModoGlobal('tasa')">📊 Por 100k habitantes</button>
+      <button id="gbtn-absoluto" onclick="setModoGlobal('absoluto')">🔢 Número absoluto</button>
+      <div class="toggle-note">Ajustado por población DANE · Colombia</div>
     </div>
 
     <!-- KPIs -->
@@ -496,6 +523,22 @@ const CHARTS = {};
 let D = { main: [], depto: {}, sexo: {}, etario: {}, judicial: {} };
 let dropIdx = -1;
 
+// Modo global: 'tasa' (default) | 'absoluto'
+let _modoGlobal = 'tasa';
+let _selectActual = null; // último delito seleccionado
+
+function setModoGlobal(modo) {
+  _modoGlobal = modo;
+  $('gbtn-tasa').classList.toggle('active',     modo === 'tasa');
+  $('gbtn-absoluto').classList.toggle('active', modo === 'absoluto');
+  // Sincronizar también el toggle de depto
+  _modoDepto = modo;
+  $('btn-absoluto').classList.toggle('active', modo === 'absoluto');
+  $('btn-tasa').classList.toggle('active',     modo === 'tasa');
+  // Redibujar si hay un delito seleccionado
+  if (_selectActual) select(_selectActual);
+}
+
 // ── CARGA DE TODOS LOS JSONs ──────────────────────────────────
 async function init() {
   try {
@@ -594,50 +637,80 @@ input.addEventListener('keydown', e => {
 
 // ── SELECCIONAR CATEGORÍA ─────────────────────────────────────
 function select(d) {
+  _selectActual = d;
   input.value = '';
   dropdown.style.display = 'none';
   $('empty-state').style.display = 'none';
   $('result').style.display      = 'block';
 
-  const nombre  = d.nombre;
-  const years   = Object.keys(d.porAnio).map(Number).sort((a,b)=>a-b);
-  const values  = years.map(y => d.porAnio[y]);
-  const peakIdx = values.indexOf(Math.max(...values));
-  const rank    = D.main.findIndex(x => x.nombre === nombre) + 1;
-  const t       = d.tendencia;
+  const usarTasa = _modoGlobal === 'tasa' && d.tasaPorAnio;
+  const nombre   = d.nombre;
+
+  // Datos según modo
+  const porAnio  = usarTasa ? d.tasaPorAnio : d.porAnio;
+  const years    = Object.keys(porAnio).map(Number).sort((a,b) => a-b);
+  const values   = years.map(y => porAnio[y]);
+  const peakIdx  = values.indexOf(Math.max(...values));
+  const rank     = D.main.findIndex(x => x.nombre === nombre) + 1;
+  const t        = usarTasa ? (d.tendenciaTasa || 0) : d.tendencia;
 
   // Cabecera
   $('result-name').textContent = nombre;
 
-  // KPIs
-  $('k-total').textContent     = fmt(d.total);
+  // KPIs — cambian según modo
+  if (usarTasa) {
+    const avgTasa = d.totalTasa / years.length;
+    $('k-total').textContent     = d.peakValorTasa?.toFixed(1) ?? '—';
+    $('k-range').textContent     = `${years[0]} – ${years.at(-1)}`;
+    $('k-peak-val').textContent  = d.peakValorTasa?.toFixed(1) ?? '—';
+    $('k-peak-year').textContent = `año ${d.peakTasa}`;
+    $('k-avg').textContent       = avgTasa.toFixed(1);
+
+    // Cambiar labels de KPIs
+    document.querySelector('#k-total + .lbl').textContent     = 'Peak tasa /100k hab.';
+    document.querySelector('#k-peak-val + .lbl').textContent  = 'Peak histórico /100k';
+    document.querySelector('#k-avg + .lbl').textContent       = 'Promedio anual /100k';
+  } else {
+    $('k-total').textContent     = fmt(d.total);
+    $('k-range').textContent     = `${years[0]} – ${years.at(-1)}`;
+    $('k-peak-val').textContent  = fmt(d.peakValor);
+    $('k-peak-year').textContent = `año ${d.peak}`;
+    $('k-avg').textContent       = fmt(Math.round(d.total / years.length));
+
+    document.querySelector('#k-total + .lbl').textContent     = 'Total víctimas';
+    document.querySelector('#k-peak-val + .lbl').textContent  = 'Peak histórico';
+    document.querySelector('#k-avg + .lbl').textContent       = 'Promedio anual';
+  }
+
   $('k-range').textContent     = `${years[0]} – ${years.at(-1)}`;
-  $('k-peak-val').textContent  = fmt(d.peakValor);
-  $('k-peak-year').textContent = `año ${d.peak}`;
-  $('k-avg').textContent       = fmt(Math.round(d.total / years.length));
   $('k-rank').textContent      = `#${rank}`;
   $('k-total-cats').textContent = D.main.length;
 
   const tc = $('k-trend-card');
   tc.className = 'kpi';
   if (t > 5) {
-    $('k-trend').textContent = `▲ +${Math.abs(t).toFixed(0)}%`;
+    $('k-trend').textContent     = `▲ +${Math.abs(t).toFixed(0)}%`;
     $('k-trend-sub').textContent = 'subió el último año';
     tc.classList.add('k-up');
   } else if (t < -5) {
-    $('k-trend').textContent = `▼ ${Math.abs(t).toFixed(0)}%`;
+    $('k-trend').textContent     = `▼ ${Math.abs(t).toFixed(0)}%`;
     $('k-trend-sub').textContent = 'bajó el último año';
     tc.classList.add('k-down');
   } else {
-    $('k-trend').textContent = '± estable';
+    $('k-trend').textContent     = '± estable';
     $('k-trend-sub').textContent = 'sin cambio significativo';
   }
+
+  // Inicializar toggle de departamentos en sync con el modo global
+  _modoDepto = _modoGlobal;
+  $('btn-absoluto').classList.toggle('active', _modoGlobal === 'absoluto');
+  $('btn-tasa').classList.toggle('active',     _modoGlobal === 'tasa');
 
   // Resetear a primera tab
   switchTab('anual', document.querySelector('.tab-btn'));
 
   // Renderizar todas las tabs
-  renderAnual(nombre, years, values, peakIdx, t);
+  renderAnual(nombre, years, values, peakIdx, t, usarTasa);
   renderDepto(nombre);
   renderSexo(nombre);
   renderEtario(nombre);
@@ -664,11 +737,13 @@ function mkChart(id, config) {
 }
 
 // ── TAB 1: EVOLUCIÓN ANUAL ────────────────────────────────────
-function renderAnual(nombre, years, values, peakIdx, t) {
+function renderAnual(nombre, years, values, peakIdx, t, usarTasa = false) {
   const color = t > 5 ? '#c41e1e' : t < -5 ? '#3ddc84' : '#5a90b0';
   const ctx   = $('chart-anual').getContext('2d');
   const grad  = ctx.createLinearGradient(0,0,0,320);
   grad.addColorStop(0, color+'28'); grad.addColorStop(1, color+'00');
+
+  const unidad = usarTasa ? ' /100k hab.' : ' víctimas';
 
   mkChart('chart-anual', {
     type: 'line',
@@ -686,8 +761,15 @@ function renderAnual(nombre, years, values, peakIdx, t) {
       }],
     },
     options: chartOpts({
-      tooltipLabel: (c) =>
-        ` ${c.parsed.y.toLocaleString('es-CO')} víctimas${c.dataIndex===peakIdx?' ← PEAK':''}`,
+      tooltipLabel: (c) => {
+        const v = usarTasa
+          ? ` ${c.parsed.y.toFixed(2)}${unidad}`
+          : ` ${c.parsed.y.toLocaleString('es-CO')}${unidad}`;
+        return v + (c.dataIndex === peakIdx ? '  ← PEAK' : '');
+      },
+      yCallback: usarTasa
+        ? v => v.toFixed(0)
+        : v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v,
     }),
   });
 }
@@ -995,15 +1077,15 @@ function renderOtros(currentNombre) {
 }
 
 // ── OPCIONES BASE CHART ────────────────────────────────────────
-function chartOpts({ tooltipLabel } = {}) {
+function chartOpts({ tooltipLabel, yCallback } = {}) {
   return {
     responsive: true, maintainAspectRatio: false,
     animation: { duration: 500 },
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#1a2540',
-        titleColor: '#7a8ba8', bodyColor: '#e8ecf4', padding: 12,
+        backgroundColor: '#0d2b3c',
+        titleColor: '#7aafc8', bodyColor: '#f5edd6', padding: 12,
         bodyFont:  { family: 'JetBrains Mono', size: 12 },
         titleFont: { family: 'JetBrains Mono', size: 10 },
         callbacks: {
@@ -1021,7 +1103,7 @@ function chartOpts({ tooltipLabel } = {}) {
         grid: { color: '#0d2b3c', lineWidth: 0.5 },
         ticks: {
           color: '#7aafc8', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 5,
-          callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v,
+          callback: yCallback || (v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v),
         },
         beginAtZero: true,
       },
@@ -1036,6 +1118,9 @@ function clearResult() {
   input.value = '';
   input.focus();
 }
+
+// Inicializar toggle global con tasa como default
+$('gbtn-tasa').classList.add('active');
 
 init();
 </script>
