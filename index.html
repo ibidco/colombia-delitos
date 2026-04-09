@@ -336,31 +336,10 @@
 // El año "último completo" es el año anterior al actual.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── MODO ADMIN ────────────────────────────────────────────────────────────────
-// El botón "Actualizar datos" solo aparece si la URL contiene ?admin=TUCLAVE
-// Ejemplo: https://tu-sitio.vercel.app?admin=colombia2024
-// Cambia "colombia2024" por la clave que tú quieras. Solo tú la conoces.
-const ADMIN_KEY = 'colombia2024';
-if (new URLSearchParams(window.location.search).get('admin') === ADMIN_KEY) {
-  document.getElementById('btn-refresh').style.display = 'inline-flex';
-}
 // ─────────────────────────────────────────────────────────────────────────────
-
-const RESOURCE   = 'https://www.datos.gov.co/resource/4mnf-va5w.json';
-const THIS_YEAR  = new Date().getFullYear();
-// Excluir el año actual porque solo tiene datos parciales
-const MAX_YEAR   = THIS_YEAR - 1;
-
-function buildUrl(offset = 0) {
-  const params = new URLSearchParams({
-    '$select': 'grupo_delito, a_o_hechos, sum(total_victimas) as total',
-    '$group':  'grupo_delito, a_o_hechos',
-    '$order':  'a_o_hechos ASC',
-    '$limit':  '50000',
-    '$offset': String(offset),
-  });
-  return `${RESOURCE}?${params}`;
-}
+// Lee data.json — archivo estático generado por descargar.py y subido a GitHub.
+// Sin API externo, sin límites, carga en < 500ms para cualquier usuario.
+// ─────────────────────────────────────────────────────────────────────────────
 
 const CHARTS = {};
 const $      = id => document.getElementById(id);
@@ -370,78 +349,25 @@ const fmt    = n =>
   n.toLocaleString('es-CO');
 
 const setStatus = (state, msg) => {
-  $('dot').className   = 'dot ' + state;
+  $('dot').className          = 'dot ' + state;
   $('status-msg').textContent = msg;
 };
 
 const setBtn = loading => {
   const b = $('btn-refresh');
+  if (!b) return;
   b.classList.toggle('spinning', loading);
   b.disabled = loading;
 };
 
-// ── FETCH con paginación ──────────────────────────────────────────────────────
-async function fetchAll() {
-  let all = [], offset = 0;
-  while (true) {
-    const res   = await fetch(buildUrl(offset));
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-    const batch = await res.json();
-    if (!Array.isArray(batch) || !batch.length) break;
-    all = all.concat(batch);
-    setStatus('loading', `Descargando… ${all.length.toLocaleString()} registros`);
-    if (batch.length < 50000) break;
-    offset += 50000;
-  }
-  return all;
-}
-
-// ── PROCESAR ──────────────────────────────────────────────────────────────────
-function buildMap(rows) {
-  const map = {};
-  for (const r of rows) {
-    const g = (r.grupo_delito || 'SIN CLASIFICAR').trim();
-    const y = parseInt(r.a_o_hechos);
-    const v = parseFloat(r.total) || 0;
-
-    // Solo años válidos y hasta el último año completo
-    if (!y || isNaN(y) || y < 2000 || y > MAX_YEAR) continue;
-
-    if (!map[g]) map[g] = {};
-    map[g][y] = (map[g][y] || 0) + v;
-  }
-  return map;
-}
-
-function sortGroups(map) {
-  return Object.entries(map)
-    .map(([name, byYear]) => ({
-      name,
-      byYear,
-      total: Object.values(byYear).reduce((a, b) => a + b, 0),
-    }))
-    .filter(d => d.total > 0)
-    .sort((a, b) => b.total - a.total);
-}
-
-// ── TENDENCIA: último vs penúltimo año disponible ─────────────────────────────
-function calcTrend(byYear) {
-  const yrs = Object.keys(byYear).map(Number).sort((a, b) => a - b);
-  if (yrs.length < 2) return 0;
-  const last = byYear[yrs.at(-1)];
-  const prev = byYear[yrs.at(-2)];
-  return prev ? ((last - prev) / prev) * 100 : 0;
-}
-
 // ── RESUMEN ───────────────────────────────────────────────────────────────────
-function renderSummary(groups) {
-  const totalVic  = groups.reduce((a, b) => a + b.total, 0);
-  const allYears  = [...new Set(
-    groups.flatMap(g => Object.keys(g.byYear).map(Number))
+function renderSummary(datos, meta) {
+  const allYears = [...new Set(
+    datos.flatMap(g => Object.keys(g.porAnio).map(Number))
   )].sort((a, b) => a - b);
 
-  $('s-vic').textContent   = fmt(totalVic);
-  $('s-cat').textContent   = groups.length;
+  $('s-vic').textContent   = fmt(meta.total_victimas);
+  $('s-cat').textContent   = datos.length;
   $('s-years').textContent = allYears.length;
   $('s-first').textContent = allYears.at(0)  || '—';
   $('s-last').textContent  = allYears.at(-1) || '—';
@@ -449,23 +375,22 @@ function renderSummary(groups) {
 }
 
 // ── GRID ──────────────────────────────────────────────────────────────────────
-function renderGrid(groups) {
+function renderGrid(datos) {
   const grid = $('grid');
   grid.innerHTML = '';
 
-  groups.forEach((g, i) => {
-    const years   = Object.keys(g.byYear).map(Number).sort((a, b) => a - b);
-    const values  = years.map(y => g.byYear[y]);
+  datos.forEach((g, i) => {
+    const years   = Object.keys(g.porAnio).map(Number).sort((a, b) => a - b);
+    const values  = years.map(y => g.porAnio[y]);
     const peakIdx = values.indexOf(Math.max(...values));
-    const peakYear = years[peakIdx];
-    const t       = calcTrend(g.byYear);
     const cid     = `ch${i}`;
+    const t       = g.tendencia;
 
     const tClass = t > 5 ? 'up' : t < -5 ? 'down' : 'flat';
     const tLabel = t > 5
-      ? `▲ +${t.toFixed(0)}% último año`
+      ? `▲ +${Math.abs(t).toFixed(0)}% último año`
       : t < -5
-        ? `▼ ${t.toFixed(0)}% último año`
+        ? `▼ ${Math.abs(t).toFixed(0)}% último año`
         : '— estable';
 
     const card = document.createElement('div');
@@ -473,12 +398,12 @@ function renderGrid(groups) {
     card.style.animationDelay = `${(i % 4) * 0.05}s`;
     card.innerHTML = `
       <span class="card-rank">#${i + 1}</span>
-      <div class="card-name">${g.name}</div>
+      <div class="card-name">${g.nombre}</div>
       <div class="card-total">${fmt(g.total)} <span>víctimas totales</span></div>
       <div class="chart-wrap"><canvas id="${cid}"></canvas></div>
       <span class="trend ${tClass}">${tLabel}</span>
       <span class="peak-label">
-        <span class="peak-dot"></span>peak ${peakYear}: ${fmt(values[peakIdx])}
+        <span class="peak-dot"></span>peak ${g.peak}: ${fmt(g.peakValor)}
       </span>
     `;
     grid.appendChild(card);
@@ -486,24 +411,18 @@ function renderGrid(groups) {
   });
 }
 
-// ── CHART con punto rojo en el peak ───────────────────────────────────────────
+// ── CHART ─────────────────────────────────────────────────────────────────────
 function drawChart(id, years, values, peakIdx, t) {
   if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; }
   const el = $(id);
   if (!el) return;
   const ctx = el.getContext('2d');
 
-  // Color de la línea según tendencia
   const lineColor = t > 5 ? '#f87171' : t < -5 ? '#3ddc84' : '#4f9cf9';
-
-  // Degradado de relleno
   const grad = ctx.createLinearGradient(0, 0, 0, 100);
   grad.addColorStop(0, lineColor + '22');
   grad.addColorStop(1, lineColor + '00');
 
-  // Arrays punto a punto:
-  // - Todos los puntos son invisibles (radius 0)
-  // - Excepto el peak: punto rojo de radius 5
   const pointRadius = values.map((_, i) => i === peakIdx ? 5 : 0);
   const pointColors = values.map((_, i) => i === peakIdx ? '#e03c31' : lineColor);
   const pointBorder = values.map((_, i) => i === peakIdx ? '#ff6b6b' : lineColor);
@@ -520,8 +439,7 @@ function drawChart(id, years, values, peakIdx, t) {
         backgroundColor: grad,
         fill: true,
         tension: 0.35,
-        // Puntos individuales por índice
-        pointRadius:          pointRadius,
+        pointRadius,
         pointHoverRadius:     pointHover,
         pointBackgroundColor: pointColors,
         pointBorderColor:     pointBorder,
@@ -541,29 +459,19 @@ function drawChart(id, years, values, peakIdx, t) {
           bodyFont:  { family: 'JetBrains Mono', size: 11 },
           titleFont: { family: 'JetBrains Mono', size: 10 },
           callbacks: {
-            label: c => {
-              const isPeak = c.dataIndex === peakIdx;
-              return ` ${c.parsed.y.toLocaleString('es-CO')} víctimas${isPeak ? ' 🔴 PEAK' : ''}`;
-            },
+            label: c => ` ${c.parsed.y.toLocaleString('es-CO')} víctimas${c.dataIndex === peakIdx ? ' 🔴 PEAK' : ''}`,
           },
         },
       },
       scales: {
         x: {
           grid: { color: '#1a2540', lineWidth: 0.5 },
-          ticks: {
-            color: '#7a8ba8',
-            font: { family: 'JetBrains Mono', size: 8 },
-            maxTicksLimit: 6,
-            maxRotation: 0,
-          },
+          ticks: { color: '#7a8ba8', font: { family: 'JetBrains Mono', size: 8 }, maxTicksLimit: 6, maxRotation: 0 },
         },
         y: {
           grid: { color: '#1a2540', lineWidth: 0.5 },
           ticks: {
-            color: '#7a8ba8',
-            font: { family: 'JetBrains Mono', size: 8 },
-            maxTicksLimit: 4,
+            color: '#7a8ba8', font: { family: 'JetBrains Mono', size: 8 }, maxTicksLimit: 4,
             callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v,
           },
           beginAtZero: false,
@@ -574,16 +482,15 @@ function drawChart(id, years, values, peakIdx, t) {
 }
 
 // ── MAIN ──────────────────────────────────────────────────────────────────────
-async function loadData(force = false) {
+async function loadData() {
   const grid     = $('grid');
   const errorBox = $('error-box');
 
   setBtn(true);
-  setStatus('loading', 'Conectando con datos.gov.co…');
-  errorBox.style.display   = 'none';
+  setStatus('loading', 'Cargando datos…');
+  errorBox.style.display     = 'none';
   $('summary').style.display = 'none';
 
-  // Skeletons mientras carga
   grid.innerHTML = '';
   for (let i = 0; i < 8; i++) {
     const sk = document.createElement('div');
@@ -592,28 +499,27 @@ async function loadData(force = false) {
   }
 
   try {
-    const rows = await fetchAll();
-    if (!rows.length) throw new Error('El API devolvió 0 registros');
+    // Lee el archivo estático — instantáneo, sin API externo
+    const res  = await fetch('data.json');
+    if (!res.ok) throw new Error(`No se encontró data.json (HTTP ${res.status})`);
+    const json = await res.json();
 
-    setStatus('loading', `Procesando ${rows.length.toLocaleString()} registros…`);
-    const map    = buildMap(rows);
-    const groups = sortGroups(map);
-    if (!groups.length) throw new Error('No se encontraron categorías válidas');
+    const { datos, meta } = json;
+    if (!datos || !datos.length) throw new Error('El archivo data.json está vacío');
 
-    renderSummary(groups);
+    renderSummary(datos, meta);
     grid.innerHTML = '';
-    renderGrid(groups);
+    renderGrid(datos);
 
-    const now = new Date().toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' });
-    setStatus('ok', `${rows.length.toLocaleString()} registros · ${groups.length} categorías · datos hasta ${MAX_YEAR}`);
-    $('last-updated').textContent = `Actualizado: ${now} · años 2000–${MAX_YEAR}`;
+    setStatus('ok', `${datos.length} categorías · ${fmt(meta.total_victimas)} víctimas · datos hasta ${meta.hasta_anio}`);
+    $('last-updated').textContent = `Datos al: ${meta.generadoStr} · Creado por Ivan Felipe Agudelo`;
 
   } catch (err) {
     console.error(err);
     grid.innerHTML = '';
     setStatus('error', 'Error al cargar datos');
     errorBox.style.display = 'block';
-    $('error-detail').textContent = `Error: ${err.message}\n\nURL: ${buildUrl(0)}`;
+    $('error-detail').textContent = `Error: ${err.message}`;
   } finally {
     setBtn(false);
   }
