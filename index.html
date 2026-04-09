@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Delitos en Colombia — Datos Abiertos</title>
+  <title>Buscador de Delitos — Colombia Datos Abiertos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -13,10 +13,12 @@
     :root {
       --bg:        #0b0f1a;
       --card:      #141c2e;
+      --card2:     #1a2438;
       --border:    #1e2d4a;
       --yellow:    #f5c842;
       --red:       #e03c31;
       --accent:    #4f9cf9;
+      --green:     #3ddc84;
       --text:      #e8ecf4;
       --muted:     #7a8ba8;
       --font-head: 'Playfair Display', Georgia, serif;
@@ -29,6 +31,8 @@
       color: var(--text);
       font-family: var(--font-body);
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
     body::before {
@@ -37,441 +41,586 @@
       pointer-events: none; z-index: 0;
     }
 
-    /* ── HEADER ─────────────────────────────────────── */
-    header {
-      position: relative;
-      padding: 48px 32px 32px;
+    /* ── NAV ──────────────────────────────────────────── */
+    .site-nav {
+      background: var(--card);
       border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      position: relative; z-index: 10;
     }
+    .site-nav-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center;
+    }
+    .nav-brand {
+      font-family: var(--font-head);
+      font-size: 1rem; font-weight: 700;
+      color: var(--yellow); padding: 14px 20px 14px 0;
+      margin-right: 8px; border-right: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .nav-link {
+      padding: 14px 18px;
+      font-family: var(--font-mono); font-size: 0.68rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted); text-decoration: none;
+      border-bottom: 2px solid transparent;
+      transition: color .2s, border-color .2s;
+    }
+    .nav-link:hover  { color: var(--text); }
+    .nav-link.active { color: var(--yellow); border-color: var(--yellow); }
 
+    /* ── HERO ─────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      padding: 64px 32px 52px;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
     .flag-stripe {
       position: absolute; top: 0; left: 0; right: 0; height: 5px;
       background: linear-gradient(90deg,
         #f5c842 0% 25%, #003087 25% 50%,
         #e03c31 50% 75%, #f5c842 75% 100%);
     }
-
-    .header-inner {
-      max-width: 1600px; margin: 0 auto;
-      display: flex; align-items: flex-end;
-      justify-content: space-between; gap: 20px; flex-wrap: wrap;
+    .hero-tag {
+      font-family: var(--font-mono);
+      font-size: 0.65rem; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 16px;
     }
-
-    h1 {
+    .hero h1 {
       font-family: var(--font-head);
-      font-size: clamp(1.8rem, 4vw, 3.6rem);
-      font-weight: 900; letter-spacing: -0.025em; line-height: 1.0;
+      font-size: clamp(2.4rem, 5vw, 4.2rem);
+      font-weight: 900; letter-spacing: -0.02em;
+      line-height: 1.0; margin-bottom: 14px;
     }
-    h1 em { color: var(--yellow); font-style: normal; }
-
-    .subtitle {
-      margin-top: 8px; font-size: 0.9rem;
-      color: var(--muted); font-weight: 300; font-style: italic;
-    }
-
-    .header-right {
-      display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+    .hero h1 em { color: var(--yellow); font-style: normal; }
+    .hero p {
+      font-size: 1rem; color: var(--muted);
+      font-weight: 300; font-style: italic;
+      max-width: 480px; margin: 0 auto 40px;
+      line-height: 1.6;
     }
 
-    .btn-refresh {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: var(--yellow); color: #0a0d17; border: none;
-      padding: 10px 20px; font-family: var(--font-mono);
-      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em;
-      text-transform: uppercase; cursor: pointer;
-      transition: opacity .15s, transform .15s;
-      white-space: nowrap;
+    /* ── BUSCADOR ─────────────────────────────────────── */
+    .search-wrap {
+      position: relative;
+      max-width: 640px;
+      margin: 0 auto;
     }
-    .btn-refresh:hover  { opacity: .85; transform: translateY(-1px); }
-    .btn-refresh:active { transform: translateY(0); }
-    .btn-refresh:disabled { opacity: .4; cursor: not-allowed; transform: none; }
-    .btn-refresh svg { width: 13px; height: 13px; flex-shrink: 0; }
-    .btn-refresh.spinning svg { animation: spin .7s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Oculto por defecto — solo visible en modo admin */
-    #btn-refresh { display: none; }
-
-    .last-updated {
-      font-family: var(--font-mono); font-size: 0.65rem;
-      color: var(--muted); text-align: right;
+    .search-icon {
+      position: absolute; left: 18px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted); pointer-events: none;
+      width: 20px; height: 20px; flex-shrink: 0;
     }
-
-    /* ── STATUS BAR ─────────────────────────────────── */
-    #status-bar {
-      max-width: 1600px; margin: 0 auto;
-      padding: 12px 32px;
-      display: flex; align-items: center; gap: 10px;
-      font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .dot {
-      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
-      background: var(--muted);
-    }
-    .dot.loading { background: var(--yellow); animation: blink 1s ease-in-out infinite; }
-    .dot.ok      { background: #3ddc84; }
-    .dot.error   { background: var(--red); }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
-
-    /* ── MAIN ───────────────────────────────────────── */
-    main {
-      max-width: 1600px; margin: 0 auto;
-      padding: 28px 32px 80px;
-    }
-
-    /* ── RESUMEN ────────────────────────────────────── */
-    #summary {
-      display: none;
-      grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
-      gap: 1px; background: var(--border);
-      border: 1px solid var(--border); margin-bottom: 32px;
-    }
-    .summary-cell { background: var(--card); padding: 16px 20px; }
-    .summary-cell .num {
-      font-family: var(--font-mono); font-size: 1.5rem;
-      font-weight: 600; color: var(--yellow);
-    }
-    .summary-cell .lbl {
-      margin-top: 3px; font-size: 0.65rem; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.07em;
-    }
-
-    /* ── SECCIÓN ────────────────────────────────────── */
-    .section-title {
-      display: flex; align-items: center; gap: 14px; margin-bottom: 20px;
-    }
-    .section-title h2 {
-      font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600;
-      color: var(--muted); text-transform: uppercase;
-      letter-spacing: 0.15em; white-space: nowrap;
-    }
-    .section-title hr { flex: 1; border: none; border-top: 1px solid var(--border); }
-
-    /* ── GRID: responsive 1-4 columnas ─────────────── */
-    #grid {
-      display: grid;
-      gap: 12px;
-      /* Por defecto en pantallas pequeñas: 1 columna */
-      grid-template-columns: 1fr;
-    }
-
-    /* ≥ 480px → 2 columnas */
-    @media (min-width: 480px) {
-      #grid { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    /* ≥ 860px → 3 columnas */
-    @media (min-width: 860px) {
-      #grid { grid-template-columns: repeat(3, 1fr); }
-    }
-
-    /* ≥ 1180px → 4 columnas (máximo) */
-    @media (min-width: 1180px) {
-      #grid { grid-template-columns: repeat(4, 1fr); }
-    }
-
-    /* ── TARJETA ────────────────────────────────────── */
-    .card {
+    #search-input {
+      width: 100%;
       background: var(--card);
       border: 1px solid var(--border);
-      padding: 14px 14px 10px;
-      position: relative;
-      animation: up .35s ease both;
-      transition: border-color .2s, transform .2s;
+      color: var(--text);
+      padding: 18px 18px 18px 52px;
+      font-family: var(--font-body);
+      font-size: 1.05rem;
+      outline: none;
+      transition: border-color .2s;
     }
-    .card:hover { border-color: #335580; transform: translateY(-2px); }
-    @keyframes up {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+    #search-input::placeholder { color: var(--muted); }
+    #search-input:focus { border-color: var(--accent); }
 
-    .card-rank {
-      position: absolute; top: 9px; right: 10px;
-      font-family: var(--font-mono); font-size: 0.55rem; color: var(--border);
-    }
-
-    .card-name {
-      font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.04em; color: var(--text);
-      line-height: 1.35; padding-right: 30px; min-height: 2.4em;
-    }
-
-    .card-total {
-      font-family: var(--font-mono); font-size: 0.88rem;
-      font-weight: 600; color: var(--yellow); margin: 5px 0 10px;
-    }
-    .card-total span { font-size: 0.55rem; font-weight: 400; color: var(--muted); }
-
-    /* El gráfico es un poco más alto para que el punto rojo se vea bien */
-    .chart-wrap { position: relative; height: 100px; }
-
-    .trend {
-      display: inline-block; margin-top: 7px;
-      font-family: var(--font-mono); font-size: 0.55rem; padding: 2px 6px;
-    }
-    .trend.up   { background: rgba(224,60,49,.12); color: #f87171; }
-    .trend.down { background: rgba(61,220,132,.1);  color: #3ddc84; }
-    .trend.flat { background: rgba(122,139,168,.1); color: var(--muted); }
-
-    /* Leyenda del punto pico */
-    .peak-label {
-      display: inline-flex; align-items: center; gap: 5px;
-      font-family: var(--font-mono); font-size: 0.52rem;
-      color: var(--muted); margin-top: 4px; margin-left: 6px;
-    }
-    .peak-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--red); flex-shrink: 0;
-    }
-
-    /* ── SKELETONS ──────────────────────────────────── */
-    .skel {
-      height: 185px;
-      background: linear-gradient(90deg, var(--card) 25%, #192236 50%, var(--card) 75%);
-      background-size: 200%;
-      animation: shimmer 1.4s infinite;
+    /* ── DROPDOWN ─────────────────────────────────────── */
+    #dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px); left: 0; right: 0;
+      background: var(--card);
       border: 1px solid var(--border);
+      max-height: 320px; overflow-y: auto;
+      z-index: 100;
+      box-shadow: 0 16px 48px rgba(0,0,0,.5);
     }
-    @keyframes shimmer { from{background-position:200% 0} to{background-position:-200% 0} }
+    #dropdown::-webkit-scrollbar { width: 4px; }
+    #dropdown::-webkit-scrollbar-thumb { background: var(--border); }
 
-    /* ── ERROR ──────────────────────────────────────── */
-    #error-box { display: none; padding: 60px 0; text-align: center; }
-    #error-box h2 { font-family: var(--font-head); font-size: 1.5rem; margin-bottom: 10px; }
-    #error-box p  { color: var(--muted); font-size: .88rem; max-width: 480px; margin: 0 auto; }
-    #error-box code {
-      display: block; margin: 18px auto; max-width: 600px;
-      padding: 12px 16px; background: var(--card);
-      border: 1px solid var(--border); font-family: var(--font-mono);
-      font-size: 0.68rem; color: var(--accent);
-      text-align: left; word-break: break-all; white-space: pre-wrap;
+    .dropdown-item {
+      padding: 12px 18px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .dropdown-item:last-child { border: none; }
+    .dropdown-item:hover,
+    .dropdown-item.focused { background: var(--card2); }
+    .dropdown-item .d-name { font-size: 0.88rem; color: var(--text); flex: 1; }
+    .dropdown-item .d-name mark { background: transparent; color: var(--yellow); font-weight: 600; }
+    .dropdown-item .d-total { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); white-space: nowrap; }
+    .dropdown-empty { padding: 20px 18px; color: var(--muted); font-size: 0.88rem; font-style: italic; }
+
+    /* ── MAIN ─────────────────────────────────────────── */
+    main {
+      max-width: 1100px; margin: 0 auto;
+      padding: 40px 32px 80px;
+      flex: 1; width: 100%;
     }
 
-    /* ── FOOTER ─────────────────────────────────────── */
+    /* ── ESTADO VACÍO ─────────────────────────────────── */
+    #empty-state { text-align: center; padding: 48px 0 0; }
+    .suggestions-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .suggestion-chips {
+      display: flex; flex-wrap: wrap;
+      gap: 8px; justify-content: center;
+      max-width: 700px; margin: 0 auto;
+    }
+    .chip {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      font-family: var(--font-mono); font-size: 0.68rem;
+      color: var(--muted); cursor: pointer;
+      transition: border-color .2s, color .2s;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .chip:hover { border-color: var(--accent); color: var(--text); }
+
+    /* ── RESULTADO ────────────────────────────────────── */
+    #result { display: none; }
+
+    .result-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .result-title {
+      font-family: var(--font-head);
+      font-size: clamp(1.6rem, 3vw, 2.6rem);
+      font-weight: 900; letter-spacing: -0.02em; line-height: 1.05;
+    }
+    .result-title span {
+      display: block;
+      font-family: var(--font-mono); font-size: 0.65rem; font-weight: 400;
+      color: var(--muted); letter-spacing: 0.15em;
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+    .btn-clear {
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); padding: 8px 16px;
+      font-family: var(--font-mono); font-size: 0.65rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      cursor: pointer; transition: border-color .2s, color .2s;
+      white-space: nowrap; align-self: flex-start; margin-top: 8px;
+    }
+    .btn-clear:hover { border-color: var(--accent); color: var(--text); }
+
+    /* ── KPIs ─────────────────────────────────────────── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); margin-bottom: 20px;
+    }
+    .kpi { background: var(--card); padding: 20px 22px; }
+    .kpi .val {
+      font-family: var(--font-mono); font-size: 1.75rem;
+      font-weight: 600; color: var(--yellow); line-height: 1;
+    }
+    .kpi .lbl {
+      margin-top: 5px; font-size: 0.68rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.07em;
+    }
+    .kpi .sub {
+      margin-top: 3px; font-family: var(--font-mono);
+      font-size: 0.6rem; color: var(--border);
+    }
+    .kpi.k-peak .val  { color: var(--red); }
+    .kpi.k-up   .val  { color: #f87171; }
+    .kpi.k-down .val  { color: var(--green); }
+
+    /* ── GRÁFICO ──────────────────────────────────────── */
+    .chart-container {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 28px 28px 20px;
+      margin-bottom: 24px;
+    }
+    .chart-header {
+      display: flex;
+      justify-content: space-between; align-items: center;
+      margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+    }
+    .chart-header h3 {
+      font-family: var(--font-mono); font-size: 0.68rem;
+      font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--muted);
+    }
+    .chart-legend {
+      display: flex; gap: 16px; align-items: center;
+      font-family: var(--font-mono); font-size: 0.62rem; color: var(--muted);
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot  { width: 8px; height: 8px; border-radius: 50%; }
+    #main-chart-wrap { position: relative; height: 340px; }
+
+    /* ── RANKING ──────────────────────────────────────── */
+    .ranking-label {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .ranking-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 8px;
+    }
+    .ranking-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      background: var(--card); border: 1px solid var(--border);
+      cursor: pointer; transition: border-color .2s;
+    }
+    .ranking-item:hover { border-color: var(--accent); }
+    .ranking-num  { font-family: var(--font-mono); font-size: 0.72rem; color: var(--border); flex-shrink: 0; width: 22px; }
+    .ranking-name { font-size: 0.72rem; color: var(--text); flex: 1; line-height: 1.3; text-transform: uppercase; letter-spacing: 0.03em; }
+    .ranking-val  { font-family: var(--font-mono); font-size: 0.68rem; color: var(--yellow); white-space: nowrap; }
+
+    /* ── FOOTER ───────────────────────────────────────── */
     footer {
-      border-top: 1px solid var(--border);
-      padding: 20px 32px; text-align: center;
-      font-family: var(--font-mono); font-size: 0.65rem; color: var(--muted);
+      border-top: 1px solid var(--border); padding: 20px 32px;
+      text-align: center; font-family: var(--font-mono);
+      font-size: 0.65rem; color: var(--muted);
     }
     footer a { color: var(--accent); text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
 
-    /* ── MOBILE HEADER ADJUSTMENTS ──────────────────── */
     @media (max-width: 600px) {
-      header { padding: 40px 20px 24px; }
-      main   { padding: 20px 16px 60px; }
-      #status-bar { padding: 10px 20px; }
-      .header-right { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
+      .hero { padding: 48px 20px 36px; }
+      main  { padding: 28px 16px 60px; }
+      .site-nav { padding: 0 16px; }
+      .nav-brand { display: none; }
+      #main-chart-wrap { height: 240px; }
     }
   </style>
 </head>
 <body>
 
-<header>
-  <div class="flag-stripe"></div>
-  <div class="header-inner">
-    <div>
-      <h1>Delitos en <em>Colombia</em></h1>
-      <p class="subtitle">Víctimas por categoría · Evolución anual · Fiscalía General de la Nación</p>
-    </div>
-    <div class="header-right">
-      <button class="btn-refresh" id="btn-refresh" onclick="loadData(true)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-             stroke-linecap="round" stroke-linejoin="round">
-          <path d="M1 4v6h6M23 20v-6h-6"/>
-          <path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/>
-        </svg>
-        Actualizar datos
-      </button>
-      <div class="last-updated" id="last-updated">Fuente: datos.gov.co · Socrata SODA 2.0</div>
-      <div class="last-updated">Creado por <strong style="color: var(--text); font-weight: 600;">Ivan Felipe Agudelo</strong></div>
-    </div>
+<nav class="site-nav">
+  <div class="site-nav-inner">
+    <div class="nav-brand">Colombia · Datos</div>
+    <a class="nav-link active" href="index.html">🔍 Buscador</a>
+    <a class="nav-link" href="dashboard.html">📊 Todos los delitos</a>
   </div>
-</header>
+</nav>
 
-<div id="status-bar">
-  <div class="dot loading" id="dot"></div>
-  <span id="status-msg">Conectando con datos.gov.co…</span>
-</div>
+<section class="hero">
+  <div class="flag-stripe"></div>
+  <div class="hero-tag">Colombia · Datos Abiertos · Fiscalía General de la Nación</div>
+  <h1>Buscador de <em>Delitos</em></h1>
+  <p>Escribe un tipo de delito para ver su evolución histórica en detalle</p>
+
+  <div class="search-wrap">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input type="text" id="search-input"
+      placeholder="Ej: Hurto, Homicidio, Violencia intrafamiliar…"
+      autocomplete="off" spellcheck="false">
+    <div id="dropdown"></div>
+  </div>
+</section>
 
 <main>
-  <div id="summary">
-    <div class="summary-cell"><div class="num" id="s-vic">—</div><div class="lbl">Total víctimas</div></div>
-    <div class="summary-cell"><div class="num" id="s-cat">—</div><div class="lbl">Categorías</div></div>
-    <div class="summary-cell"><div class="num" id="s-years">—</div><div class="lbl">Años de datos</div></div>
-    <div class="summary-cell"><div class="num" id="s-first">—</div><div class="lbl">Primer año</div></div>
-    <div class="summary-cell"><div class="num" id="s-last">—</div><div class="lbl">Último año completo</div></div>
+  <!-- Estado vacío -->
+  <div id="empty-state">
+    <div class="suggestions-label">Categorías más frecuentes — haz clic para explorar</div>
+    <div class="suggestion-chips" id="chips"></div>
   </div>
 
-  <div class="section-title">
-    <h2>Evolución anual por categoría · de mayor a menor · punto rojo = peak histórico</h2>
-    <hr>
-  </div>
+  <!-- Resultado -->
+  <div id="result">
+    <div class="result-header">
+      <div class="result-title">
+        <span>Categoría seleccionada</span>
+        <div id="result-name">—</div>
+      </div>
+      <button class="btn-clear" onclick="clearResult()">✕ Nueva búsqueda</button>
+    </div>
 
-  <div id="grid"></div>
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="val" id="k-total">—</div>
+        <div class="lbl">Total víctimas</div>
+        <div class="sub" id="k-range">—</div>
+      </div>
+      <div class="kpi k-peak">
+        <div class="val" id="k-peak-val">—</div>
+        <div class="lbl">Peak histórico</div>
+        <div class="sub" id="k-peak-year">año —</div>
+      </div>
+      <div class="kpi">
+        <div class="val" id="k-avg">—</div>
+        <div class="lbl">Promedio anual</div>
+        <div class="sub">víctimas por año</div>
+      </div>
+      <div class="kpi" id="k-trend-card">
+        <div class="val" id="k-trend">—</div>
+        <div class="lbl">Tendencia</div>
+        <div class="sub" id="k-trend-sub">último año</div>
+      </div>
+      <div class="kpi">
+        <div class="val" id="k-rank">—</div>
+        <div class="lbl">Ranking</div>
+        <div class="sub">de <span id="k-total-cats">—</span> categorías</div>
+      </div>
+    </div>
 
-  <div id="error-box">
-    <h2>No se pudieron cargar los datos</h2>
-    <p>Verifica tu conexión a internet e intenta de nuevo.</p>
-    <code id="error-detail"></code>
+    <div class="chart-container">
+      <div class="chart-header">
+        <h3>Víctimas por año</h3>
+        <div class="chart-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#4f9cf9"></div>
+            Víctimas anuales
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#e03c31"></div>
+            Peak histórico
+          </div>
+        </div>
+      </div>
+      <div id="main-chart-wrap">
+        <canvas id="main-chart"></canvas>
+      </div>
+    </div>
+
+    <div class="ranking-label">Otras categorías — haz clic para ver</div>
+    <div class="ranking-grid" id="ranking-grid"></div>
   </div>
 </main>
 
 <footer>
-  Datos:
+  Creado por <strong style="color: var(--text)">Ivan Felipe Agudelo</strong>
+  &nbsp;·&nbsp;
   <a href="https://www.datos.gov.co/Justicia-y-Derecho/Conteo-de-V-ctimas-V2/4mnf-va5w" target="_blank">Conteo de Víctimas V2</a>
-  &nbsp;·&nbsp;
-  Fuente: Fiscalía General de la Nación
-  &nbsp;·&nbsp;
-  <a href="https://www.datos.gov.co/resource/4mnf-va5w.json" target="_blank">API SODA 2.0</a>
+  &nbsp;·&nbsp; Fiscalía General de la Nación
 </footer>
 
 <script>
-// ─────────────────────────────────────────────────────────────────────────────
-// NOTA TÉCNICA:
-// El dataset solo tiene granularidad ANUAL (campo: a_o_hechos).
-// No existe un campo de mes en la fuente de datos.
-// Para evitar la caída visual del año actual (incompleto), lo excluimos.
-// El año "último completo" es el año anterior al actual.
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Lee data.json — archivo estático generado por descargar.py y subido a GitHub.
-// Sin API externo, sin límites, carga en < 500ms para cualquier usuario.
-// ─────────────────────────────────────────────────────────────────────────────
-
-const CHARTS = {};
-const $      = id => document.getElementById(id);
-const fmt    = n =>
+const $   = id => document.getElementById(id);
+const fmt = n =>
   n >= 1e6 ? (n/1e6).toFixed(1)+'M' :
   n >= 1e3 ? (n/1e3).toFixed(0)+'K' :
   n.toLocaleString('es-CO');
 
-const setStatus = (state, msg) => {
-  $('dot').className          = 'dot ' + state;
-  $('status-msg').textContent = msg;
-};
+let DATOS      = [];
+let CHART_INST = null;
+let dropIdx    = -1;
 
-const setBtn = loading => {
-  const b = $('btn-refresh');
-  if (!b) return;
-  b.classList.toggle('spinning', loading);
-  b.disabled = loading;
-};
-
-// ── RESUMEN ───────────────────────────────────────────────────────────────────
-function renderSummary(datos, meta) {
-  const allYears = [...new Set(
-    datos.flatMap(g => Object.keys(g.porAnio).map(Number))
-  )].sort((a, b) => a - b);
-
-  $('s-vic').textContent   = fmt(meta.total_victimas);
-  $('s-cat').textContent   = datos.length;
-  $('s-years').textContent = allYears.length;
-  $('s-first').textContent = allYears.at(0)  || '—';
-  $('s-last').textContent  = allYears.at(-1) || '—';
-  $('summary').style.display = 'grid';
+// ── INIT ───────────────────────────────────────────────────────
+async function init() {
+  try {
+    const res  = await fetch('data.json');
+    const json = await res.json();
+    DATOS = json.datos || [];
+    renderChips();
+  } catch(e) {
+    $('empty-state').innerHTML =
+      '<p style="color:var(--muted);font-style:italic;padding:40px 0">Error cargando datos.</p>';
+  }
 }
 
-// ── GRID ──────────────────────────────────────────────────────────────────────
-function renderGrid(datos) {
-  const grid = $('grid');
-  grid.innerHTML = '';
-
-  datos.forEach((g, i) => {
-    const years   = Object.keys(g.porAnio).map(Number).sort((a, b) => a - b);
-    const values  = years.map(y => g.porAnio[y]);
-    const peakIdx = values.indexOf(Math.max(...values));
-    const cid     = `ch${i}`;
-    const t       = g.tendencia;
-
-    const tClass = t > 5 ? 'up' : t < -5 ? 'down' : 'flat';
-    const tLabel = t > 5
-      ? `▲ +${Math.abs(t).toFixed(0)}% último año`
-      : t < -5
-        ? `▼ ${Math.abs(t).toFixed(0)}% último año`
-        : '— estable';
-
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.style.animationDelay = `${(i % 4) * 0.05}s`;
-    card.innerHTML = `
-      <span class="card-rank">#${i + 1}</span>
-      <div class="card-name">${g.nombre}</div>
-      <div class="card-total">${fmt(g.total)} <span>víctimas totales</span></div>
-      <div class="chart-wrap"><canvas id="${cid}"></canvas></div>
-      <span class="trend ${tClass}">${tLabel}</span>
-      <span class="peak-label">
-        <span class="peak-dot"></span>peak ${g.peak}: ${fmt(g.peakValor)}
-      </span>
-    `;
-    grid.appendChild(card);
-    requestAnimationFrame(() => drawChart(cid, years, values, peakIdx, t));
+// ── CHIPS ──────────────────────────────────────────────────────
+function renderChips() {
+  const wrap = $('chips');
+  DATOS.slice(0, 8).forEach(d => {
+    const c = document.createElement('div');
+    c.className = 'chip';
+    c.textContent = d.nombre;
+    c.onclick = () => selectCategoria(d);
+    wrap.appendChild(c);
   });
 }
 
-// ── CHART ─────────────────────────────────────────────────────────────────────
-function drawChart(id, years, values, peakIdx, t) {
-  if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; }
-  const el = $(id);
-  if (!el) return;
-  const ctx = el.getContext('2d');
+// ── BUSCADOR ───────────────────────────────────────────────────
+const input    = $('search-input');
+const dropdown = $('dropdown');
 
-  const lineColor = t > 5 ? '#f87171' : t < -5 ? '#3ddc84' : '#4f9cf9';
-  const grad = ctx.createLinearGradient(0, 0, 0, 100);
-  grad.addColorStop(0, lineColor + '22');
-  grad.addColorStop(1, lineColor + '00');
+function highlight(text, q) {
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0) return text;
+  return text.slice(0,i) +
+    `<mark>${text.slice(i, i+q.length)}</mark>` +
+    text.slice(i+q.length);
+}
 
-  const pointRadius = values.map((_, i) => i === peakIdx ? 5 : 0);
-  const pointColors = values.map((_, i) => i === peakIdx ? '#e03c31' : lineColor);
-  const pointBorder = values.map((_, i) => i === peakIdx ? '#ff6b6b' : lineColor);
-  const pointHover  = values.map((_, i) => i === peakIdx ? 7 : 3);
+function renderDropdown(q) {
+  dropIdx = -1;
+  if (!q) { dropdown.style.display = 'none'; return; }
 
-  CHARTS[id] = new Chart(ctx, {
+  const matches = DATOS.filter(d =>
+    d.nombre.toLowerCase().includes(q.toLowerCase())
+  ).slice(0, 12);
+
+  if (!matches.length) {
+    dropdown.innerHTML = '<div class="dropdown-empty">Sin resultados para "'+q+'"</div>';
+  } else {
+    dropdown.innerHTML = matches.map(d => `
+      <div class="dropdown-item" data-nombre="${d.nombre}">
+        <span class="d-name">${highlight(d.nombre, q)}</span>
+        <span class="d-total">${fmt(d.total)}</span>
+      </div>
+    `).join('');
+
+    dropdown.querySelectorAll('.dropdown-item').forEach(el => {
+      el.addEventListener('mousedown', e => {
+        e.preventDefault();
+        const found = DATOS.find(x => x.nombre === el.dataset.nombre);
+        if (found) selectCategoria(found);
+      });
+    });
+  }
+  dropdown.style.display = 'block';
+}
+
+input.addEventListener('input', () => renderDropdown(input.value.trim()));
+
+input.addEventListener('keydown', e => {
+  const items = [...dropdown.querySelectorAll('.dropdown-item')];
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    dropIdx = Math.min(dropIdx + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('focused', i === dropIdx));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    dropIdx = Math.max(dropIdx - 1, 0);
+    items.forEach((el, i) => el.classList.toggle('focused', i === dropIdx));
+  } else if (e.key === 'Enter') {
+    const focused = items[dropIdx];
+    const nombre  = focused?.dataset.nombre;
+    const found   = DATOS.find(x => x.nombre === nombre);
+    if (found) selectCategoria(found);
+  } else if (e.key === 'Escape') {
+    dropdown.style.display = 'none';
+  }
+});
+
+input.addEventListener('blur', () => {
+  setTimeout(() => { dropdown.style.display = 'none'; }, 200);
+});
+
+// ── SELECCIONAR ────────────────────────────────────────────────
+function selectCategoria(d) {
+  input.value = '';
+  dropdown.style.display = 'none';
+
+  $('empty-state').style.display = 'none';
+  $('result').style.display      = 'block';
+
+  const years   = Object.keys(d.porAnio).map(Number).sort((a,b) => a-b);
+  const values  = years.map(y => d.porAnio[y]);
+  const peakIdx = values.indexOf(Math.max(...values));
+  const total   = d.total;
+  const avg     = Math.round(total / years.length);
+  const rank    = DATOS.findIndex(x => x.nombre === d.nombre) + 1;
+  const t       = d.tendencia;
+
+  // Título
+  $('result-name').textContent = d.nombre;
+
+  // KPIs
+  $('k-total').textContent     = fmt(total);
+  $('k-range').textContent     = `${years[0]} – ${years.at(-1)}`;
+  $('k-peak-val').textContent  = fmt(d.peakValor);
+  $('k-peak-year').textContent = `año ${d.peak}`;
+  $('k-avg').textContent       = fmt(avg);
+  $('k-rank').textContent      = `#${rank}`;
+  $('k-total-cats').textContent = DATOS.length;
+
+  // Tendencia
+  const tc = $('k-trend-card');
+  tc.className = 'kpi';
+  if (t > 5) {
+    $('k-trend').textContent = `▲ +${Math.abs(t).toFixed(0)}%`;
+    $('k-trend-sub').textContent = 'subió el último año';
+    tc.classList.add('k-up');
+  } else if (t < -5) {
+    $('k-trend').textContent = `▼ ${Math.abs(t).toFixed(0)}%`;
+    $('k-trend-sub').textContent = 'bajó el último año';
+    tc.classList.add('k-down');
+  } else {
+    $('k-trend').textContent = '± estable';
+    $('k-trend-sub').textContent = 'sin cambio significativo';
+  }
+
+  drawChart(years, values, peakIdx, t);
+  renderRanking(d.nombre);
+
+  $('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ── GRÁFICO ────────────────────────────────────────────────────
+function drawChart(years, values, peakIdx, t) {
+  if (CHART_INST) { CHART_INST.destroy(); CHART_INST = null; }
+
+  const ctx   = $('main-chart').getContext('2d');
+  const color = t > 5 ? '#f87171' : t < -5 ? '#3ddc84' : '#4f9cf9';
+  const grad  = ctx.createLinearGradient(0, 0, 0, 340);
+  grad.addColorStop(0, color + '30');
+  grad.addColorStop(1, color + '00');
+
+  const pointRadius = values.map((_, i) => i === peakIdx ? 8 : 3);
+  const pointBg     = values.map((_, i) => i === peakIdx ? '#e03c31' : color);
+  const pointBorder = values.map((_, i) => i === peakIdx ? '#ff6b6b' : color + '88');
+  const pointHover  = values.map((_, i) => i === peakIdx ? 10 : 5);
+
+  CHART_INST = new Chart(ctx, {
     type: 'line',
     data: {
       labels: years,
       datasets: [{
         data: values,
-        borderColor: lineColor,
-        borderWidth: 1.5,
-        backgroundColor: grad,
-        fill: true,
-        tension: 0.35,
-        pointRadius,
-        pointHoverRadius:     pointHover,
-        pointBackgroundColor: pointColors,
-        pointBorderColor:     pointBorder,
-        pointBorderWidth:     2,
+        borderColor: color, borderWidth: 2,
+        backgroundColor: grad, fill: true, tension: 0.35,
+        pointRadius, pointHoverRadius: pointHover,
+        pointBackgroundColor: pointBg,
+        pointBorderColor: pointBorder, pointBorderWidth: 2,
       }],
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 500 },
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 600 },
       plugins: {
         legend: { display: false },
         tooltip: {
           backgroundColor: '#1a2540',
-          titleColor: '#7a8ba8',
-          bodyColor: '#e8ecf4',
-          bodyFont:  { family: 'JetBrains Mono', size: 11 },
-          titleFont: { family: 'JetBrains Mono', size: 10 },
+          titleColor: '#7a8ba8', bodyColor: '#e8ecf4',
+          padding: 12,
+          bodyFont:  { family: 'JetBrains Mono', size: 13 },
+          titleFont: { family: 'JetBrains Mono', size: 11 },
           callbacks: {
-            label: c => ` ${c.parsed.y.toLocaleString('es-CO')} víctimas${c.dataIndex === peakIdx ? ' 🔴 PEAK' : ''}`,
+            title: items => `Año ${items[0].label}`,
+            label: c => ` ${c.parsed.y.toLocaleString('es-CO')} víctimas${c.dataIndex === peakIdx ? '  ← PEAK' : ''}`,
           },
         },
       },
       scales: {
         x: {
           grid: { color: '#1a2540', lineWidth: 0.5 },
-          ticks: { color: '#7a8ba8', font: { family: 'JetBrains Mono', size: 8 }, maxTicksLimit: 6, maxRotation: 0 },
+          ticks: { color: '#7a8ba8', font: { family: 'JetBrains Mono', size: 10 }, maxTicksLimit: 12, maxRotation: 0 },
         },
         y: {
           grid: { color: '#1a2540', lineWidth: 0.5 },
           ticks: {
-            color: '#7a8ba8', font: { family: 'JetBrains Mono', size: 8 }, maxTicksLimit: 4,
+            color: '#7a8ba8', font: { family: 'JetBrains Mono', size: 10 }, maxTicksLimit: 6,
             callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v,
           },
           beginAtZero: false,
@@ -481,51 +630,35 @@ function drawChart(id, years, values, peakIdx, t) {
   });
 }
 
-// ── MAIN ──────────────────────────────────────────────────────────────────────
-async function loadData() {
-  const grid     = $('grid');
-  const errorBox = $('error-box');
-
-  setBtn(true);
-  setStatus('loading', 'Cargando datos…');
-  errorBox.style.display     = 'none';
-  $('summary').style.display = 'none';
-
+// ── RANKING ────────────────────────────────────────────────────
+function renderRanking(currentNombre) {
+  const grid = $('ranking-grid');
   grid.innerHTML = '';
-  for (let i = 0; i < 8; i++) {
-    const sk = document.createElement('div');
-    sk.className = 'skel';
-    grid.appendChild(sk);
-  }
-
-  try {
-    // Lee el archivo estático — instantáneo, sin API externo
-    const res  = await fetch('data.json');
-    if (!res.ok) throw new Error(`No se encontró data.json (HTTP ${res.status})`);
-    const json = await res.json();
-
-    const { datos, meta } = json;
-    if (!datos || !datos.length) throw new Error('El archivo data.json está vacío');
-
-    renderSummary(datos, meta);
-    grid.innerHTML = '';
-    renderGrid(datos);
-
-    setStatus('ok', `${datos.length} categorías · ${fmt(meta.total_victimas)} víctimas · datos hasta ${meta.hasta_anio}`);
-    $('last-updated').textContent = `Datos al: ${meta.generadoStr} · Creado por Ivan Felipe Agudelo`;
-
-  } catch (err) {
-    console.error(err);
-    grid.innerHTML = '';
-    setStatus('error', 'Error al cargar datos');
-    errorBox.style.display = 'block';
-    $('error-detail').textContent = `Error: ${err.message}`;
-  } finally {
-    setBtn(false);
-  }
+  let shown = 0;
+  DATOS.forEach((d, i) => {
+    if (d.nombre === currentNombre || shown >= 11) return;
+    shown++;
+    const item = document.createElement('div');
+    item.className = 'ranking-item';
+    item.innerHTML = `
+      <span class="ranking-num">#${i+1}</span>
+      <span class="ranking-name">${d.nombre}</span>
+      <span class="ranking-val">${fmt(d.total)}</span>
+    `;
+    item.onclick = () => selectCategoria(d);
+    grid.appendChild(item);
+  });
 }
 
-loadData();
+// ── LIMPIAR ────────────────────────────────────────────────────
+function clearResult() {
+  $('result').style.display      = 'none';
+  $('empty-state').style.display = 'block';
+  input.value = '';
+  input.focus();
+}
+
+init();
 </script>
 </body>
 </html>
