@@ -11,16 +11,17 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0b0f1a;
-      --card:      #141c2e;
-      --card2:     #1a2438;
-      --border:    #1e2d4a;
-      --yellow:    #f5c842;
-      --red:       #e03c31;
-      --accent:    #4f9cf9;
+      --bg:        #061520;
+      --card:      #0d2b3c;
+      --card2:     #12354a;
+      --border:    #1a4060;
+      --yellow:    #f5edd6;
+      --red:       #8b0012;
+      --red2:      #c41e1e;
+      --accent:    #5a90b0;
       --green:     #3ddc84;
-      --text:      #e8ecf4;
-      --muted:     #7a8ba8;
+      --text:      #f5edd6;
+      --muted:     #7aafc8;
       --font-head: 'Playfair Display', Georgia, serif;
       --font-body: 'Source Serif 4', Georgia, serif;
       --font-mono: 'JetBrains Mono', monospace;
@@ -386,8 +387,8 @@
         <div class="chart-box-header">
           <h3>Víctimas por año</h3>
           <div class="chart-legend">
-            <div class="leg-item"><div class="leg-dot" style="background:#4f9cf9"></div>Víctimas</div>
-            <div class="leg-item"><div class="leg-dot" style="background:#e03c31"></div>Peak</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#5a90b0"></div>Víctimas</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#8b0012"></div>Peak</div>
           </div>
         </div>
         <div class="chart-tall"><canvas id="chart-anual"></canvas></div>
@@ -409,8 +410,8 @@
         <div class="chart-box-header">
           <h3>Víctimas por sexo — evolución anual</h3>
           <div class="chart-legend">
-            <div class="leg-item"><div class="leg-dot" style="background:#4f9cf9"></div>Masculino</div>
-            <div class="leg-item"><div class="leg-dot" style="background:#f87171"></div>Femenino</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#5a90b0"></div>Masculino</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#c41e1e"></div>Femenino</div>
           </div>
         </div>
         <div class="chart-tall"><canvas id="chart-sexo"></canvas></div>
@@ -458,10 +459,10 @@ const fmt = n =>
   n >= 1e3 ? (n/1e3).toFixed(0)+'K' :
   n.toLocaleString('es-CO');
 
-// Paleta de colores para múltiples series
+// Paleta de colores
 const PALETTE = [
-  '#4f9cf9','#f5c842','#3ddc84','#f87171','#a78bfa',
-  '#fb923c','#34d399','#f472b6','#60a5fa','#facc15',
+  '#5a90b0','#f5edd6','#c41e1e','#8b0012','#7aafc8',
+  '#a0c8d8','#d4a0a0','#e8d0b0','#3d7a9a','#b04040',
 ];
 
 // Instancias de charts activos
@@ -640,7 +641,7 @@ function mkChart(id, config) {
 
 // ── TAB 1: EVOLUCIÓN ANUAL ────────────────────────────────────
 function renderAnual(nombre, years, values, peakIdx, t) {
-  const color = t > 5 ? '#f87171' : t < -5 ? '#3ddc84' : '#4f9cf9';
+  const color = t > 5 ? '#c41e1e' : t < -5 ? '#3ddc84' : '#5a90b0';
   const ctx   = $('chart-anual').getContext('2d');
   const grad  = ctx.createLinearGradient(0,0,0,320);
   grad.addColorStop(0, color+'28'); grad.addColorStop(1, color+'00');
@@ -655,8 +656,8 @@ function renderAnual(nombre, years, values, peakIdx, t) {
         backgroundColor: grad, fill: true, tension: 0.35,
         pointRadius:          values.map((_,i) => i===peakIdx ? 8 : 3),
         pointHoverRadius:     values.map((_,i) => i===peakIdx ? 10 : 5),
-        pointBackgroundColor: values.map((_,i) => i===peakIdx ? '#e03c31' : color),
-        pointBorderColor:     values.map((_,i) => i===peakIdx ? '#ff6b6b' : color+'88'),
+        pointBackgroundColor: values.map((_,i) => i===peakIdx ? '#8b0012' : color),
+        pointBorderColor:     values.map((_,i) => i===peakIdx ? '#c41e1e' : color+'88'),
         pointBorderWidth: 2,
       }],
     },
@@ -693,8 +694,42 @@ function renderDepto(nombre) {
       }],
     },
     options: {
-      ...chartOpts({ tooltipLabel: c => ` ${c.parsed.y.toLocaleString('es-CO')} víctimas` }),
       indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 500 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a2540',
+          titleColor: '#7a8ba8', bodyColor: '#e8ecf4', padding: 12,
+          bodyFont:  { family: 'JetBrains Mono', size: 12 },
+          titleFont: { family: 'JetBrains Mono', size: 10 },
+          callbacks: {
+            title: items => items[0].label,
+            label: c => ` ${c.parsed.x.toLocaleString('es-CO')} víctimas`,
+          },
+        },
+      },
+      scales: {
+        y: {
+          grid: { display: false },
+          ticks: {
+            color: '#f5edd6',
+            font: { family: 'JetBrains Mono', size: 9 },
+            autoSkip: false,
+          },
+        },
+        x: {
+          grid: { color: '#0d2b3c', lineWidth: 0.5 },
+          ticks: {
+            color: '#7aafc8',
+            font: { family: 'JetBrains Mono', size: 9 },
+            maxTicksLimit: 6,
+            callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v,
+          },
+          beginAtZero: true,
+        },
+      },
     },
   });
 
@@ -740,15 +775,15 @@ function renderSexo(nombre) {
         {
           label: 'Masculino',
           data: vMasc,
-          borderColor: '#4f9cf9', borderWidth: 2,
-          backgroundColor: '#4f9cf911', fill: true, tension: 0.35,
+          borderColor: '#5a90b0', borderWidth: 2,
+          backgroundColor: '#5a90b011', fill: true, tension: 0.35,
           pointRadius: 2, pointHoverRadius: 5,
         },
         {
           label: 'Femenino',
           data: vFem,
-          borderColor: '#f87171', borderWidth: 2,
-          backgroundColor: '#f8717111', fill: true, tension: 0.35,
+          borderColor: '#c41e1e', borderWidth: 2,
+          backgroundColor: '#c41e1e11', fill: true, tension: 0.35,
           pointRadius: 2, pointHoverRadius: 5,
         },
       ],
@@ -772,11 +807,11 @@ function renderSexo(nombre) {
   const insight = $('sexo-insight');
   insight.innerHTML = `
     <div class="sexo-cell">
-      <div class="sc-val" style="color:#4f9cf9">${fmt(totalM)}</div>
+      <div class="sc-val" style="color:#5a90b0">${fmt(totalM)}</div>
       <div class="sc-lbl">Víctimas masculinas</div>
     </div>
     <div class="sexo-cell">
-      <div class="sc-val" style="color:#f87171">${fmt(totalF)}</div>
+      <div class="sc-val" style="color:#c41e1e">${fmt(totalF)}</div>
       <div class="sc-lbl">Víctimas femeninas</div>
     </div>
     <div class="sexo-cell">
@@ -829,7 +864,7 @@ function renderJudicial(nombre) {
 
   const etapas = Object.entries(jData.etapas).slice(0, 6);
   const total  = etapas.reduce((s,[,v])=>s+v, 0);
-  const colors = ['#4f9cf9','#f5c842','#3ddc84','#f87171','#a78bfa','#fb923c'];
+  const colors = ['#5a90b0','#f5edd6','#c41e1e','#8b0012','#7aafc8','#a0c8d8'];
 
   mkChart('chart-judicial', {
     type: 'doughnut',
@@ -916,13 +951,13 @@ function chartOpts({ tooltipLabel } = {}) {
     },
     scales: {
       x: {
-        grid: { color: '#1a2540', lineWidth: 0.5 },
-        ticks: { color: '#7a8ba8', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 10, maxRotation: 30 },
+        grid: { color: '#0d2b3c', lineWidth: 0.5 },
+        ticks: { color: '#7aafc8', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 10, maxRotation: 30 },
       },
       y: {
-        grid: { color: '#1a2540', lineWidth: 0.5 },
+        grid: { color: '#0d2b3c', lineWidth: 0.5 },
         ticks: {
-          color: '#7a8ba8', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 5,
+          color: '#7aafc8', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 5,
           callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v,
         },
         beginAtZero: true,

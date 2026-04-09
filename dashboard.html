@@ -11,14 +11,16 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0b0f1a;
-      --card:      #141c2e;
-      --border:    #1e2d4a;
-      --yellow:    #f5c842;
-      --red:       #e03c31;
-      --accent:    #4f9cf9;
-      --text:      #e8ecf4;
-      --muted:     #7a8ba8;
+      --bg:        #061520;
+      --card:      #0d2b3c;
+      --border:    #1a4060;
+      --yellow:    #f5edd6;
+      --red:       #8b0012;
+      --red2:      #c41e1e;
+      --accent:    #5a90b0;
+      --green:     #3ddc84;
+      --text:      #f5edd6;
+      --muted:     #7aafc8;
       --font-head: 'Playfair Display', Georgia, serif;
       --font-body: 'Source Serif 4', Georgia, serif;
       --font-mono: 'JetBrains Mono', monospace;
@@ -446,14 +448,14 @@ function drawChart(id, years, values, peakIdx, t) {
   if (!el) return;
   const ctx = el.getContext('2d');
 
-  const lineColor = t > 5 ? '#f87171' : t < -5 ? '#3ddc84' : '#4f9cf9';
+  const lineColor = t > 5 ? '#c41e1e' : t < -5 ? '#3ddc84' : '#5a90b0';
   const grad = ctx.createLinearGradient(0, 0, 0, 100);
   grad.addColorStop(0, lineColor + '22');
   grad.addColorStop(1, lineColor + '00');
 
   const pointRadius = values.map((_, i) => i === peakIdx ? 5 : 0);
-  const pointColors = values.map((_, i) => i === peakIdx ? '#e03c31' : lineColor);
-  const pointBorder = values.map((_, i) => i === peakIdx ? '#ff6b6b' : lineColor);
+  const pointColors = values.map((_, i) => i === peakIdx ? '#8b0012' : lineColor);
+  const pointBorder = values.map((_, i) => i === peakIdx ? '#c41e1e' : lineColor);
   const pointHover  = values.map((_, i) => i === peakIdx ? 7 : 3);
 
   CHARTS[id] = new Chart(ctx, {
@@ -481,9 +483,9 @@ function drawChart(id, years, values, peakIdx, t) {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#1a2540',
-          titleColor: '#7a8ba8',
-          bodyColor: '#e8ecf4',
+          backgroundColor: '#0d2b3c',
+          titleColor: '#7aafc8',
+          bodyColor: '#f5edd6',
           bodyFont:  { family: 'JetBrains Mono', size: 11 },
           titleFont: { family: 'JetBrains Mono', size: 10 },
           callbacks: {
@@ -493,13 +495,13 @@ function drawChart(id, years, values, peakIdx, t) {
       },
       scales: {
         x: {
-          grid: { color: '#1a2540', lineWidth: 0.5 },
-          ticks: { color: '#7a8ba8', font: { family: 'JetBrains Mono', size: 8 }, maxTicksLimit: 6, maxRotation: 0 },
+          grid: { color: '#0d2b3c', lineWidth: 0.5 },
+          ticks: { color: '#7aafc8', font: { family: 'JetBrains Mono', size: 8 }, maxTicksLimit: 6, maxRotation: 0 },
         },
         y: {
-          grid: { color: '#1a2540', lineWidth: 0.5 },
+          grid: { color: '#0d2b3c', lineWidth: 0.5 },
           ticks: {
-            color: '#7a8ba8', font: { family: 'JetBrains Mono', size: 8 }, maxTicksLimit: 4,
+            color: '#7aafc8', font: { family: 'JetBrains Mono', size: 8 }, maxTicksLimit: 4,
             callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v,
           },
           beginAtZero: false,
