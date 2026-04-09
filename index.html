@@ -225,6 +225,24 @@
     .chart-med   { position: relative; height: 260px; }
     .chart-short { position: relative; height: 200px; }
 
+    /* ── DEPTO: toggle tasa/absoluto ───────────── */
+    .depto-toggle {
+      display: flex; gap: 0;
+      border: 1px solid var(--border);
+      overflow: hidden; flex-shrink: 0;
+    }
+    .depto-toggle button {
+      padding: 6px 14px;
+      font-family: var(--font-mono); font-size: 0.62rem;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; transition: background .15s, color .15s;
+    }
+    .depto-toggle button.active {
+      background: var(--accent); color: var(--bg);
+    }
+    .depto-toggle button:not(.active):hover { background: var(--card2); color: var(--text); }
+
     /* ── DEPTO: tabla ranking ───────────────────── */
     .depto-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 8px;
@@ -398,7 +416,13 @@
     <!-- TAB: Por departamento -->
     <div class="tab-panel" id="tab-depto">
       <div class="chart-box">
-        <div class="chart-box-header"><h3>Top departamentos — total histórico</h3></div>
+        <div class="chart-box-header">
+          <h3 id="depto-chart-title">Top departamentos — total histórico</h3>
+          <div class="depto-toggle">
+            <button class="active" id="btn-absoluto" onclick="switchDepto('absoluto')">Víctimas</button>
+            <button id="btn-tasa" onclick="switchDepto('tasa')">Por 100k hab.</button>
+          </div>
+        </div>
         <div class="chart-med"><canvas id="chart-depto"></canvas></div>
       </div>
       <div class="depto-grid" id="depto-list"></div>
@@ -669,17 +693,58 @@ function renderAnual(nombre, years, values, peakIdx, t) {
 }
 
 // ── TAB 2: POR DEPARTAMENTO ───────────────────────────────────
+let _deptoNombreActual = null;
+let _modoDepto = 'absoluto';
+
+function switchDepto(modo) {
+  _modoDepto = modo;
+  $('btn-absoluto').classList.toggle('active', modo === 'absoluto');
+  $('btn-tasa').classList.toggle('active',     modo === 'tasa');
+  if (_deptoNombreActual) renderDepto(_deptoNombreActual);
+}
+
 function renderDepto(nombre) {
+  _deptoNombreActual = nombre;
   const deptos = (D.depto[nombre] || []).slice(0, 15);
+
   if (!deptos.length) {
-    $('chart-depto').parentElement.innerHTML = '<p style="color:var(--muted);padding:20px;font-style:italic">Sin datos de departamento para esta categoría.</p>';
+    $('chart-depto').parentElement.innerHTML =
+      '<p style="color:var(--muted);padding:20px;font-style:italic">Sin datos de departamento para esta categoría.</p>';
     $('depto-list').innerHTML = '';
     return;
   }
 
-  const labels = deptos.map(d => d.depto);
-  const values = deptos.map(d => d.total);
+  const usarTasa = _modoDepto === 'tasa';
+
+  // Si modo tasa, filtrar solo deptos con tasaPorAnio
+  const base = usarTasa
+    ? deptos.filter(d => d.tasaPorAnio && Object.keys(d.tasaPorAnio).length > 0)
+    : deptos;
+
+  if (usarTasa && base.length === 0) {
+    $('chart-depto').parentElement.innerHTML =
+      '<p style="color:var(--muted);padding:20px;font-style:italic">Sin datos de población para calcular tasas en esta categoría.</p>';
+    $('depto-list').innerHTML = '';
+    return;
+  }
+
+  // Ordenar por tasa promedio o por total absoluto
+  const sorted = usarTasa
+    ? [...base].sort((a, b) => (b.totalTasa || 0) - (a.totalTasa || 0))
+    : base;
+
+  const labels = sorted.map(d => d.depto);
+  const values = sorted.map(d => usarTasa ? (d.totalTasa || 0) : d.total);
   const max    = Math.max(...values);
+
+  // Actualizar título
+  $('depto-chart-title').textContent = usarTasa
+    ? 'Top departamentos — promedio tasa por 100,000 hab.'
+    : 'Top departamentos — total histórico de víctimas';
+
+  // Destruir y recrear canvas para evitar bugs de resize
+  const wrap = $('chart-depto').parentElement;
+  wrap.innerHTML = '<canvas id="chart-depto"></canvas>';
 
   mkChart('chart-depto', {
     type: 'bar',
@@ -687,8 +752,8 @@ function renderDepto(nombre) {
       labels,
       datasets: [{
         data: values,
-        backgroundColor: PALETTE[0]+'99',
-        borderColor: PALETTE[0],
+        backgroundColor: '#5a90b099',
+        borderColor: '#5a90b0',
         borderWidth: 1,
         borderRadius: 0,
       }],
@@ -696,36 +761,32 @@ function renderDepto(nombre) {
     options: {
       indexAxis: 'y',
       responsive: true, maintainAspectRatio: false,
-      animation: { duration: 500 },
+      animation: { duration: 400 },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#1a2540',
-          titleColor: '#7a8ba8', bodyColor: '#e8ecf4', padding: 12,
+          backgroundColor: '#0d2b3c',
+          titleColor: '#7aafc8', bodyColor: '#f5edd6', padding: 12,
           bodyFont:  { family: 'JetBrains Mono', size: 12 },
           titleFont: { family: 'JetBrains Mono', size: 10 },
           callbacks: {
             title: items => items[0].label,
-            label: c => ` ${c.parsed.x.toLocaleString('es-CO')} víctimas`,
+            label: c => usarTasa
+              ? ` ${c.parsed.x.toFixed(1)} víctimas por 100,000 hab.`
+              : ` ${c.parsed.x.toLocaleString('es-CO')} víctimas`,
           },
         },
       },
       scales: {
         y: {
           grid: { display: false },
-          ticks: {
-            color: '#f5edd6',
-            font: { family: 'JetBrains Mono', size: 9 },
-            autoSkip: false,
-          },
+          ticks: { color: '#f5edd6', font: { family: 'JetBrains Mono', size: 9 }, autoSkip: false },
         },
         x: {
           grid: { color: '#0d2b3c', lineWidth: 0.5 },
           ticks: {
-            color: '#7aafc8',
-            font: { family: 'JetBrains Mono', size: 9 },
-            maxTicksLimit: 6,
-            callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v,
+            color: '#7aafc8', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 6,
+            callback: v => usarTasa ? v.toFixed(0) : (v >= 1000 ? (v/1000).toFixed(0)+'K' : v),
           },
           beginAtZero: true,
         },
@@ -736,15 +797,17 @@ function renderDepto(nombre) {
   // Lista ranking
   const list = $('depto-list');
   list.innerHTML = '';
-  deptos.forEach((d, i) => {
-    const pct = Math.round((d.total / max) * 100);
-    const el  = document.createElement('div');
+  sorted.forEach((d, i) => {
+    const val    = usarTasa ? (d.totalTasa || 0) : d.total;
+    const pct    = Math.round((val / max) * 100);
+    const valStr = usarTasa ? val.toFixed(1) + '/100k' : fmt(val);
+    const el     = document.createElement('div');
     el.className = 'depto-row';
     el.innerHTML = `
       <span class="depto-num">#${i+1}</span>
       <span class="depto-name">${d.depto}</span>
       <div class="depto-bar-wrap"><div class="depto-bar" style="width:${pct}%"></div></div>
-      <span class="depto-val">${fmt(d.total)}</span>
+      <span class="depto-val">${valStr}</span>
     `;
     list.appendChild(el);
   });
