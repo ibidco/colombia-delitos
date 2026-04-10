@@ -178,7 +178,7 @@
     }
     @media (max-width: 1200px) { #grid { grid-template-columns: repeat(4, 1fr); } }
     @media (max-width:  900px) { #grid { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width:  600px) { #grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width:  600px) { #grid { grid-template-columns: repeat(2, 1fr); gap: 14px; } }
 
     /* ── SMALL MULTIPLE CARD ──────────────────────── */
     .sm-card {
@@ -190,7 +190,6 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* Título del delito — encima del gráfico */
     .sm-title {
       font-family: var(--font-body); font-size: 0.78rem;
       font-weight: 600; color: var(--navy);
@@ -198,16 +197,20 @@
       min-height: 2.1em;
     }
 
-    /* Contenedor del gráfico */
+    /* Cuadrado perfecto usando aspect-ratio */
     .sm-chart-wrap {
       position: relative;
-      height: 110px;
+      width: 100%;
+      aspect-ratio: 1 / 1;
       background: var(--white);
       border: 1px solid var(--border2);
     }
-
-    /* Línea de referencia del peak nacional */
-    .sm-chart-wrap canvas { display: block; }
+    .sm-chart-wrap canvas {
+      position: absolute;
+      inset: 0;
+      width: 100% !important;
+      height: 100% !important;
+    }
 
     /* Footer del card */
     .sm-foot {
@@ -235,7 +238,8 @@
       background-size: 200%; animation: shimmer 1.4s infinite; border-radius: 2px;
     }
     .skel-chart {
-      height: 110px;
+      width: 100%;
+      aspect-ratio: 1 / 1;
       background: linear-gradient(90deg, var(--border2) 25%, #EAE4D8 50%, var(--border2) 75%);
       background-size: 200%; animation: shimmer 1.4s infinite;
       border: 1px solid var(--border2);
