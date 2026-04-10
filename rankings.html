@@ -3,733 +3,372 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rankings — Colombia Datos Abiertos</title>
+  <title>Rankings — Colombia en Datos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --cream:#F5EDD6;--white:#FFFFFF;--navy:#0D2B3C;--navy2:#1A4A62;
+      --muted:#4A6880;--light:#8AACBF;--border:#D4C8B0;--border2:#E8E4D8;
+      --red:#C41E1E;--red-bg:#FFEEEE;--green:#1A7A40;--green-bg:#EEFFF5;
+      --blue:#1A5C8A;--orange:#D4920A;--yellow:#D4920A;
+      --font-head:'Fraunces',Georgia,serif;
+      --font-body:'DM Sans',system-ui,sans-serif;
+      --font-mono:'DM Mono',monospace;
+    }
+    body{background:var(--cream);color:var(--navy);font-family:var(--font-body);min-height:100vh;font-size:15px;}
 
-    :root {
-      --bg:        #061520;
-      --card:      #0d2b3c;
-      --card2:     #12354a;
-      --border:    #2a5070;
-      --yellow:    #f5edd6;
-      --red:       #8b0012;
-      --red2:      #c41e1e;
-      --accent:    #5a90b0;
-      --green:     #3ddc84;
-      --text:      #ffffff;
-      --muted:     #d0dde8;
-      --font-head: 'Playfair Display', Georgia, serif;
-      --font-body: 'Source Serif 4', Georgia, serif;
-      --font-mono: 'JetBrains Mono', monospace;
-    }
+    /* NAV */
+    .site-nav{background:var(--navy);padding:0 40px;position:sticky;top:0;z-index:100;}
+    .site-nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:stretch;}
+    .nav-brand{font-family:var(--font-head);font-size:1.05rem;font-weight:700;color:var(--cream);padding:14px 24px 14px 0;margin-right:8px;border-right:1px solid #1e4a62;white-space:nowrap;display:flex;align-items:center;gap:8px;}
+    .nav-brand .flag{display:inline-flex;gap:2px;align-items:center;}
+    .nav-brand .flag span{display:inline-block;width:6px;height:14px;border-radius:1px;}
+    .nav-link{padding:0 18px;font-size:0.78rem;font-weight:500;color:var(--light);text-decoration:none;border-bottom:2px solid transparent;display:flex;align-items:center;transition:color .2s,border-color .2s;}
+    .nav-link:hover{color:var(--cream);}
+    .nav-link.active{color:var(--cream);border-color:var(--cream);}
 
-    body {
-      background: var(--bg); color: var(--text);
-      font-family: var(--font-body); min-height: 100vh;
-    }
+    /* HEADER */
+    header{background:var(--navy);padding:40px 40px 36px;border-bottom:3px solid var(--red);}
+    .header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;}
+    .header-eyebrow{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:.15em;text-transform:uppercase;color:var(--light);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+    .header-eyebrow::before{content:'';display:inline-block;width:16px;height:2px;background:var(--red);}
+    h1{font-family:var(--font-head);font-size:clamp(1.8rem,3.5vw,3rem);font-weight:300;color:var(--cream);letter-spacing:-0.02em;line-height:1.1;}
+    h1 strong{font-weight:700;color:white;}
+    .header-sub{font-size:0.88rem;color:var(--light);font-weight:300;margin-top:6px;}
 
-    body::before {
-      content: ''; position: fixed; inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
-      pointer-events: none; z-index: 0;
-    }
+    /* DELITO SELECTOR */
+    .delito-wrap{display:flex;flex-direction:column;gap:6px;}
+    .delito-wrap label{font-family:var(--font-mono);font-size:0.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--light);}
+    #delito-select{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:var(--cream);padding:9px 14px;font-family:var(--font-body);font-size:0.82rem;font-weight:500;outline:none;appearance:none;min-width:260px;border-radius:2px;}
+    #delito-select:focus{border-color:var(--cream);}
 
-    /* ── NAV ──────────────────────────────────── */
-    .site-nav {
-      background: var(--card); border-bottom: 1px solid var(--border);
-      padding: 0 32px; position: relative; z-index: 10;
-    }
-    .site-nav-inner {
-      max-width: 1200px; margin: 0 auto; display: flex; align-items: center;
-    }
-    .nav-brand {
-      font-family: var(--font-head); font-size: 1rem; font-weight: 700;
-      color: var(--yellow); padding: 14px 20px 14px 0;
-      margin-right: 8px; border-right: 1px solid var(--border); white-space: nowrap;
-    }
-    .nav-link {
-      padding: 14px 18px; font-family: var(--font-mono); font-size: 0.68rem;
-      letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
-      text-decoration: none; border-bottom: 2px solid transparent;
-      transition: color .2s, border-color .2s;
-    }
-    .nav-link:hover  { color: var(--text); }
-    .nav-link.active { color: var(--yellow); border-color: var(--yellow); }
+    /* MAIN */
+    main{max-width:1200px;margin:0 auto;padding:36px 40px 80px;}
 
-    /* ── HERO ─────────────────────────────────── */
-    header {
-      position: relative; padding: 52px 32px 40px;
-      border-bottom: 1px solid var(--border);
-    }
-    .flag-stripe {
-      position: absolute; top: 0; left: 0; right: 0; height: 5px;
-      background: linear-gradient(90deg,
-        #f5edd6 0% 25%, #0d2b3c 25% 50%, #8b0012 50% 75%, #f5edd6 75% 100%);
-    }
-    .header-inner {
-      max-width: 1200px; margin: 0 auto;
-      display: flex; justify-content: space-between; align-items: flex-end;
-      flex-wrap: wrap; gap: 20px;
-    }
-    h1 {
-      font-family: var(--font-head);
-      font-size: clamp(2rem, 4vw, 3.4rem);
-      font-weight: 900; letter-spacing: -0.02em; line-height: 1.0;
-    }
-    h1 em { color: var(--yellow); font-style: normal; }
-    .subtitle {
-      margin-top: 8px; font-size: 0.9rem; color: var(--muted);
-      font-weight: 300; font-style: italic;
-    }
+    /* SECTION */
+    .section{margin-bottom:52px;}
+    .section-head{margin-bottom:20px;}
+    .section-eyebrow{font-family:var(--font-mono);font-size:0.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+    .section-eyebrow::before{content:'';display:inline-block;width:14px;height:2px;background:var(--red);}
+    .section-title{font-family:var(--font-head);font-size:1.8rem;font-weight:700;color:var(--navy);letter-spacing:-0.02em;line-height:1.1;}
+    .section-desc{font-size:0.88rem;color:var(--muted);margin-top:6px;line-height:1.6;max-width:600px;}
 
-    /* ── SELECTOR DE DELITO ───────────────────── */
-    .delito-selector {
-      display: flex; flex-direction: column; gap: 6px; align-items: flex-end;
-    }
-    .delito-selector label {
-      font-family: var(--font-mono); font-size: 0.62rem;
-      letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
-    }
-    #delito-select {
-      background: var(--card2); border: 1px solid var(--border);
-      color: var(--text); padding: 10px 16px;
-      font-family: var(--font-mono); font-size: 0.78rem;
-      outline: none; cursor: pointer; min-width: 260px;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237aafc8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 12px center;
-      padding-right: 32px;
-    }
-    #delito-select:focus { border-color: var(--accent); }
+    /* INSIGHT */
+    .insight{background:var(--white);border:1px solid var(--border);border-left:3px solid var(--yellow);padding:14px 18px;margin-bottom:20px;font-size:0.88rem;line-height:1.7;color:var(--navy);}
+    .insight strong{color:var(--navy);font-weight:600;}
 
-    /* ── MAIN ─────────────────────────────────── */
-    main { max-width: 1200px; margin: 0 auto; padding: 40px 32px 80px; }
+    /* RANKINGS GRID */
+    .rank-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;}
 
-    /* ── SECCIÓN ──────────────────────────────── */
-    .section {
-      margin-bottom: 56px;
-    }
-    .section-head {
-      display: flex; align-items: center; gap: 14px; margin-bottom: 24px;
-    }
-    .section-head h2 {
-      font-family: var(--font-head); font-size: 1.6rem;
-      font-weight: 900; letter-spacing: -0.01em;
-    }
-    .section-head h2 em { color: var(--yellow); font-style: normal; }
-    .section-line { flex: 1; height: 1px; background: var(--border); }
-    .section-desc {
-      font-size: 0.88rem; color: var(--muted); font-style: italic;
-      margin-bottom: 20px; line-height: 1.6;
-    }
+    /* RANK CARD */
+    .rank-card{background:var(--white);border:1px solid var(--border);overflow:hidden;}
+    .rank-card-head{padding:14px 18px 12px;border-bottom:1px solid var(--border2);display:flex;align-items:flex-start;gap:10px;}
+    .rank-card-icon{font-size:1.3rem;line-height:1;flex-shrink:0;margin-top:2px;}
+    .rank-card-title{font-family:var(--font-body);font-size:0.8rem;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:.05em;}
+    .rank-card-sub{font-size:0.72rem;color:var(--muted);margin-top:2px;}
 
-    /* ── GRID DE RANKINGS ─────────────────────── */
-    .rankings-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-      gap: 20px;
-    }
+    /* RANK ROWS */
+    .rank-item{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border2);transition:background .12s;}
+    .rank-item:last-child{border:none;}
+    .rank-item:hover{background:#F8F5EE;}
+    .rank-medal{font-size:1rem;flex-shrink:0;width:22px;text-align:center;}
+    .rank-name{font-size:0.82rem;color:var(--navy);flex:1;font-weight:500;}
+    .rank-bar-col{width:70px;flex-shrink:0;}
+    .rank-bar-track{height:4px;background:var(--border2);}
+    .rank-bar-fill{height:4px;border-radius:1px;}
+    .rank-val{font-family:var(--font-mono);font-size:0.72rem;white-space:nowrap;text-align:right;min-width:60px;font-weight:500;}
 
-    /* ── TARJETA DE RANKING ───────────────────── */
-    .rank-card {
-      background: var(--card); border: 1px solid var(--border);
-      overflow: hidden;
-    }
-    .rank-card-head {
-      padding: 16px 20px 12px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: 10px;
-    }
-    .rank-card-icon { font-size: 1.2rem; flex-shrink: 0; }
-    .rank-card-title {
-      font-family: var(--font-mono); font-size: 0.68rem;
-      font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.1em; color: var(--muted);
-    }
-    .rank-card-subtitle {
-      font-size: 0.7rem; color: var(--border); margin-top: 2px;
-      font-style: italic;
-    }
+    /* GENDER */
+    .gender-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;}
+    .g-item{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border2);transition:background .12s;}
+    .g-item:last-child{border:none;}
+    .g-item:hover{background:#F8F5EE;}
+    .g-pos{font-family:var(--font-mono);font-size:0.68rem;color:var(--light);width:20px;flex-shrink:0;}
+    .g-name{font-size:0.78rem;color:var(--navy);flex:1;font-weight:500;text-transform:uppercase;letter-spacing:.03em;line-height:1.3;}
+    .g-bars{display:flex;flex-direction:column;gap:3px;width:90px;flex-shrink:0;}
+    .g-bar-row{display:flex;align-items:center;gap:4px;}
+    .g-bar-lbl{font-family:var(--font-mono);font-size:0.52rem;width:8px;flex-shrink:0;}
+    .g-bar-track{flex:1;height:4px;background:var(--border2);}
+    .g-bar-fill{height:4px;border-radius:1px;}
+    .g-bar-pct{font-family:var(--font-mono);font-size:0.58rem;width:26px;text-align:right;}
+    .g-pct{font-family:var(--font-mono);font-size:0.72rem;width:36px;text-align:right;font-weight:500;flex-shrink:0;}
 
-    /* ── ITEM DE RANKING ──────────────────────── */
-    .rank-item {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px 20px;
-      border-bottom: 1px solid var(--border);
-      transition: background .15s;
-    }
-    .rank-item:last-child { border: none; }
-    .rank-item:hover { background: var(--card2); }
+    /* BRECHA */
+    .b-item{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border2);}
+    .b-item:last-child{border:none;}
+    .b-name{font-size:0.78rem;color:var(--navy);flex:1;font-weight:500;text-transform:uppercase;letter-spacing:.03em;}
+    .b-track{flex:0 0 130px;height:8px;background:var(--border2);position:relative;border-radius:1px;}
+    .b-fill-m{position:absolute;right:50%;height:8px;background:var(--blue);border-radius:1px 0 0 1px;}
+    .b-fill-f{position:absolute;left:50%;height:8px;background:var(--red);border-radius:0 1px 1px 0;}
+    .b-center{position:absolute;left:50%;top:-2px;width:1px;height:12px;background:var(--border);}
+    .b-pct{font-family:var(--font-mono);font-size:0.7rem;min-width:48px;text-align:right;font-weight:500;}
 
-    .rank-medal {
-      font-size: 1.1rem; flex-shrink: 0; width: 24px; text-align: center;
-    }
-    .rank-pos {
-      font-family: var(--font-mono); font-size: 0.75rem;
-      color: var(--border); flex-shrink: 0; width: 24px; text-align: right;
-    }
-    .rank-name {
-      font-size: 0.82rem; color: var(--text); flex: 1; line-height: 1.3;
-    }
-    .rank-bar-col {
-      width: 80px; flex-shrink: 0;
-    }
-    .rank-bar-track { height: 3px; background: var(--border); }
-    .rank-bar-fill  { height: 3px; }
-    .rank-val {
-      font-family: var(--font-mono); font-size: 0.72rem;
-      white-space: nowrap; text-align: right; min-width: 70px;
-    }
-    .rank-delta {
-      font-family: var(--font-mono); font-size: 0.65rem;
-      white-space: nowrap; text-align: right; min-width: 56px;
-    }
+    /* FOOTER */
+    footer{background:var(--navy);color:var(--light);padding:18px 40px;text-align:center;font-family:var(--font-mono);font-size:.65rem;}
+    footer a{color:var(--cream);text-decoration:none;}
+    footer strong{color:white;}
 
-    /* Colores por tipo */
-    .rank-card.danger  .rank-bar-fill { background: var(--red2); }
-    .rank-card.danger  .rank-val      { color: #f87171; }
-    .rank-card.safe    .rank-bar-fill { background: var(--green); }
-    .rank-card.safe    .rank-val      { color: var(--green); }
-    .rank-card.improve .rank-bar-fill { background: var(--green); }
-    .rank-card.improve .rank-val      { color: var(--green); }
-    .rank-card.worsen  .rank-bar-fill { background: var(--red2); }
-    .rank-card.worsen  .rank-val      { color: #f87171; }
+    /* EMPTY */
+    .empty-msg{padding:28px 18px;color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;}
 
-    /* ── GÉNERO CARDS ─────────────────────────── */
-    .gender-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-      gap: 20px;
-    }
-
-    .gender-item {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px 20px; border-bottom: 1px solid var(--border);
-      transition: background .15s;
-    }
-    .gender-item:last-child { border: none; }
-    .gender-item:hover { background: var(--card2); }
-
-    .g-pos { font-family: var(--font-mono); font-size: 0.7rem; color: var(--border); width: 20px; flex-shrink: 0; }
-    .g-name { font-size: 0.8rem; color: var(--text); flex: 1; line-height: 1.3; text-transform: uppercase; letter-spacing: 0.03em; }
-
-    .g-bars { display: flex; flex-direction: column; gap: 3px; width: 100px; flex-shrink: 0; }
-    .g-bar-row { display: flex; align-items: center; gap: 4px; }
-    .g-bar-track { flex: 1; height: 4px; background: var(--border); }
-    .g-bar-fill-m { height: 4px; background: var(--accent); }
-    .g-bar-fill-f { height: 4px; background: #c41e1e; }
-    .g-bar-label { font-family: var(--font-mono); font-size: 0.55rem; color: var(--muted); width: 26px; text-align: right; }
-
-    .g-pct { font-family: var(--font-mono); font-size: 0.72rem; width: 40px; text-align: right; flex-shrink: 0; }
-
-    /* ── INSIGHT BOX ──────────────────────────── */
-    .insight-box {
-      background: var(--card2); border: 1px solid var(--border);
-      border-left: 3px solid var(--yellow);
-      padding: 16px 20px; margin-bottom: 20px;
-      font-size: 0.85rem; line-height: 1.7; color: var(--text);
-    }
-    .insight-box strong { color: var(--yellow); }
-
-    /* ── BRECHA CARD ──────────────────────────── */
-    .brecha-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 20px; border-bottom: 1px solid var(--border);
-    }
-    .brecha-item:last-child { border: none; }
-    .b-name { font-size: 0.78rem; color: var(--text); flex: 1; text-transform: uppercase; letter-spacing: 0.03em; }
-    .b-ratio { font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600; width: 52px; text-align: right; flex-shrink: 0; }
-    .b-track { flex: 0 0 120px; height: 6px; background: var(--border); position: relative; }
-    .b-fill-m { position: absolute; left: 50%; height: 6px; background: var(--accent); }
-    .b-fill-f { position: absolute; right: 50%; height: 6px; background: #c41e1e; }
-    .b-center { position: absolute; left: 50%; top: -3px; width: 2px; height: 12px; background: var(--border); }
-
-    /* ── SKELETON ─────────────────────────────── */
-    .skel-item {
-      height: 44px; margin: 4px 20px;
-      background: linear-gradient(90deg, var(--card) 25%, #192236 50%, var(--card) 75%);
-      background-size: 200%; animation: shimmer 1.4s infinite;
-    }
-    @keyframes shimmer { from{background-position:200% 0} to{background-position:-200% 0} }
-
-    /* ── ESTADO VACÍO ─────────────────────────── */
-    .empty-msg {
-      padding: 32px 20px; text-align: center;
-      color: var(--muted); font-style: italic; font-size: 0.85rem;
-    }
-
-    /* ── FOOTER ───────────────────────────────── */
-    footer {
-      border-top: 1px solid var(--border); padding: 20px 32px;
-      text-align: center; font-family: var(--font-mono);
-      font-size: 0.65rem; color: var(--muted);
-    }
-    footer a { color: var(--accent); text-decoration: none; }
-
-    @media (max-width: 640px) {
-      header { padding: 44px 20px 32px; }
-      main   { padding: 28px 16px 60px; }
-      .site-nav { padding: 0 16px; }
-      .nav-brand { display: none; }
-      .delito-selector { align-items: flex-start; }
-      #delito-select { min-width: 100%; }
-    }
+    @media(max-width:640px){header,main{padding-left:20px;padding-right:20px;}.site-nav{padding:0 20px;}}
   </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav class="site-nav">
   <div class="site-nav-inner">
-    <div class="nav-brand">Colombia · Datos</div>
-    <a class="nav-link" href="index.html">🔍 Buscador</a>
-    <a class="nav-link" href="dashboard.html">📊 Todos los delitos</a>
-    <a class="nav-link active" href="rankings.html">🏆 Rankings</a>
+    <div class="nav-brand">
+      <div class="flag">
+        <span style="background:#F5C842"></span>
+        <span style="background:#0D2B3C;border:1px solid #2a5a7a"></span>
+        <span style="background:#C41E1E"></span>
+      </div>
+      Colombia en Datos
+    </div>
+    <a class="nav-link" href="index.html">Buscador</a>
+    <a class="nav-link" href="dashboard.html">Todos los delitos</a>
+    <a class="nav-link active" href="rankings.html">Rankings</a>
   </div>
 </nav>
 
-<!-- HEADER -->
 <header>
-  <div class="flag-stripe"></div>
   <div class="header-inner">
     <div>
-      <h1>Rankings de <em>Delitos</em></h1>
-      <p class="subtitle">¿Dónde es más peligroso? ¿A quién afecta más? · Tasas por 100,000 hab.</p>
+      <div class="header-eyebrow">Fiscalía · DANE · Colombia</div>
+      <h1><strong>Rankings</strong> de delitos</h1>
+      <p class="header-sub">¿Dónde es más peligroso? ¿A quién afecta más? · Tasas por 100,000 hab.</p>
     </div>
-    <div class="delito-selector">
-      <label>Filtrar rankings por delito</label>
-      <select id="delito-select">
-        <option value="">Cargando...</option>
-      </select>
+    <div class="delito-wrap">
+      <label>Filtrar por delito</label>
+      <select id="delito-select"><option value="">Cargando…</option></select>
     </div>
   </div>
 </header>
 
 <main>
 
-  <!-- ── SECCIÓN 1: DEPARTAMENTOS ────────────── -->
-  <section class="section" id="sec-depto">
+  <!-- SECCIÓN 1: DEPARTAMENTOS -->
+  <section class="section">
     <div class="section-head">
-      <h2>Por <em>Departamento</em></h2>
-      <div class="section-line"></div>
+      <div class="section-eyebrow">Por departamento</div>
+      <div class="section-title">¿Dónde es más o menos grave?</div>
+      <p class="section-desc">Rankings ajustados por 100,000 habitantes. Un departamento pequeño puede ser más peligroso que Bogotá en términos relativos.</p>
     </div>
-    <p class="section-desc" id="depto-desc">
-      Ranking ajustado por población. Un departamento pequeño puede tener menos víctimas absolutas
-      pero una tasa más alta que Bogotá.
-    </p>
-
-    <div id="depto-insight" class="insight-box" style="display:none"></div>
-
-    <div class="rankings-grid" id="depto-rankings">
-      <!-- se genera dinámicamente -->
-    </div>
+    <div class="insight" id="depto-insight" style="display:none"></div>
+    <div class="rank-grid" id="depto-rankings"></div>
   </section>
 
-  <!-- ── SECCIÓN 2: GÉNERO ────────────────────── -->
-  <section class="section" id="sec-genero">
+  <!-- SECCIÓN 2: GÉNERO -->
+  <section class="section">
     <div class="section-head">
-      <h2>Por <em>Género</em></h2>
-      <div class="section-line"></div>
+      <div class="section-eyebrow">Por género</div>
+      <div class="section-title">¿A quién afecta más?</div>
+      <p class="section-desc">Qué delitos afectan desproporcionadamente a mujeres o a hombres. La brecha de género revela patrones que los totales ocultan.</p>
     </div>
-    <p class="section-desc">
-      Qué delitos afectan desproporcionadamente a mujeres o a hombres.
-      La brecha de género revela patrones que los totales ocultan.
-    </p>
-
-    <div class="gender-grid" id="gender-rankings">
-      <!-- se genera dinámicamente -->
-    </div>
+    <div class="gender-grid" id="gender-rankings"></div>
   </section>
 
 </main>
 
 <footer>
-  Creado por <strong style="color:var(--text)">Ivan Felipe Agudelo</strong>
+  Creado por <strong>Ivan Felipe Agudelo</strong>
   &nbsp;·&nbsp;
   <a href="https://www.datos.gov.co/Justicia-y-Derecho/Conteo-de-V-ctimas-V2/4mnf-va5w" target="_blank">Conteo de Víctimas V2</a>
-  &nbsp;·&nbsp; Fiscalía · DANE
+  &nbsp;·&nbsp; Fiscalía General · DANE
 </footer>
 
 <script>
 const $ = id => document.getElementById(id);
-const fmt  = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(0)+'K' : n.toLocaleString('es-CO');
-const fmtT = n => n != null ? n.toFixed(1) : '—';
+const fmt  = n => n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':n.toLocaleString('es-CO');
+const fmtT = n => n!=null?n.toFixed(1):'—';
 
-let DATA  = { main: [], depto: {}, sexo: {} };
-let DEPTO_SELECCIONADO = '';
+let DATA = { main:[], depto:{}, sexo:{} };
+let DELITO_SEL = '';
 
-// ── CARGA ───────────────────────────────────────────────────
 async function init() {
   try {
-    const [r1, r2, r3] = await Promise.all([
-      fetch('data.json'), fetch('data_depto.json'), fetch('data_sexo.json'),
-    ]);
-    const [j1, j2, j3] = await Promise.all([r1.json(), r2.json(), r3.json()]);
-    DATA.main  = j1.datos || [];
-    DATA.depto = j2.datos || {};
-    DATA.sexo  = j3.datos || {};
-
+    const [r1,r2,r3] = await Promise.all([fetch('data.json'),fetch('data_depto.json'),fetch('data_sexo.json')]);
+    const [j1,j2,j3] = await Promise.all([r1.json(),r2.json(),r3.json()]);
+    DATA.main  = j1.datos||[];
+    DATA.depto = j2.datos||{};
+    DATA.sexo  = j3.datos||{};
     poblarSelector();
     renderTodo();
-  } catch(e) {
-    console.error(e);
-    $('depto-rankings').innerHTML = '<div class="empty-msg">Error cargando datos.</div>';
-  }
+  } catch(e) { console.error(e); }
 }
 
-// ── SELECTOR ─────────────────────────────────────────────────
 function poblarSelector() {
   const sel = $('delito-select');
   sel.innerHTML = '<option value="">— Todos los delitos —</option>' +
-    DATA.main.map(d => `<option value="${d.nombre}">${d.nombre}</option>`).join('');
-  sel.addEventListener('change', () => {
-    DEPTO_SELECCIONADO = sel.value;
-    renderTodo();
-  });
+    DATA.main.map(d=>`<option value="${d.nombre}">${d.nombre}</option>`).join('');
+  sel.addEventListener('change',()=>{ DELITO_SEL=sel.value; renderTodo(); });
 }
 
-// ── RENDER PRINCIPAL ─────────────────────────────────────────
-function renderTodo() {
-  renderDeptoRankings();
-  renderGeneroRankings();
-}
+function renderTodo() { renderDeptoRankings(); renderGeneroRankings(); }
 
-// ─────────────────────────────────────────────────────────────
-// SECCIÓN 1: DEPARTAMENTOS
-// ─────────────────────────────────────────────────────────────
-function getDeptoData() {
-  if (DEPTO_SELECCIONADO) {
-    const raw = DATA.depto[DEPTO_SELECCIONADO] || [];
-    return raw.map(d => {
-      const anios      = Object.keys(d.tasaPorAnio || {}).map(Number).sort((a,b)=>a-b);
-      const ultimoAnio = anios.at(-1);
-      return { ...d, totalTasa: ultimoAnio ? d.tasaPorAnio[ultimoAnio] : null, ultimoAnio };
+// ── DEPARTAMENTOS ──────────────────────────────────────────────
+function getDeptos() {
+  if (DELITO_SEL) {
+    return (DATA.depto[DELITO_SEL]||[]).map(d=>{
+      const anios = Object.keys(d.tasaPorAnio||{}).map(Number).sort((a,b)=>a-b);
+      const ult   = anios.at(-1);
+      return {...d, totalTasa: ult?d.tasaPorAnio[ult]:null, ultimoAnio:ult};
     });
   }
-  // Todos los delitos: sumar víctimas y tasas por departamento
-  const mapa = {};
-  for (const [delito, deptos] of Object.entries(DATA.depto)) {
+  const mapa={};
+  for (const [,deptos] of Object.entries(DATA.depto)) {
     for (const d of deptos) {
-      if (!mapa[d.depto]) {
-        mapa[d.depto] = { depto: d.depto, total: 0, tasaPorAnio: {}, porAnio: {} };
-      }
+      if (!mapa[d.depto]) mapa[d.depto]={depto:d.depto,total:0,tasaPorAnio:{},porAnio:{}};
       mapa[d.depto].total += d.total;
-      if (d.tasaPorAnio) {
-        for (const [anio, tasa] of Object.entries(d.tasaPorAnio)) {
-          mapa[d.depto].tasaPorAnio[anio] = (mapa[d.depto].tasaPorAnio[anio] || 0) + tasa;
-        }
-      }
-      for (const [anio, vic] of Object.entries(d.porAnio || {})) {
-        mapa[d.depto].porAnio[anio] = (mapa[d.depto].porAnio[anio] || 0) + vic;
-      }
+      for (const [a,t] of Object.entries(d.tasaPorAnio||{})) mapa[d.depto].tasaPorAnio[a]=(mapa[d.depto].tasaPorAnio[a]||0)+t;
+      for (const [a,v] of Object.entries(d.porAnio||{}))     mapa[d.depto].porAnio[a]=(mapa[d.depto].porAnio[a]||0)+v;
     }
   }
-  return Object.values(mapa).map(d => {
-    const anios    = Object.keys(d.tasaPorAnio).map(Number).sort((a,b) => a-b);
-    const ultimoAnio = anios.at(-1);
-    // Usar ÚLTIMO AÑO disponible, no promedio
-    d.totalTasa  = ultimoAnio ? d.tasaPorAnio[ultimoAnio] : null;
-    d.ultimoAnio = ultimoAnio;
-    return d;
+  return Object.values(mapa).map(d=>{
+    const anios=Object.keys(d.tasaPorAnio).map(Number).sort((a,b)=>a-b);
+    const ult=anios.at(-1);
+    return {...d,totalTasa:ult?d.tasaPorAnio[ult]:null,ultimoAnio:ult};
   });
 }
 
 function calcCambio(d) {
-  // Cambio entre primeros 3 años y últimos 3 años disponibles (en tasa)
-  const data = d.tasaPorAnio || {};
-  const anios = Object.keys(data).map(Number).sort((a,b)=>a-b);
-  if (anios.length < 4) return null;
-  const ini = anios.slice(0, 3).reduce((s, y) => s + (data[y] || 0), 0) / 3;
-  const fin = anios.slice(-3).reduce((s, y) => s + (data[y] || 0), 0) / 3;
-  if (!ini) return null;
-  return ((fin - ini) / ini) * 100;
+  const anios=Object.keys(d.tasaPorAnio||{}).map(Number).sort((a,b)=>a-b);
+  if (anios.length<4) return null;
+  const ini=anios.slice(0,3).reduce((s,y)=>s+(d.tasaPorAnio[y]||0),0)/3;
+  const fin=anios.slice(-3).reduce((s,y)=>s+(d.tasaPorAnio[y]||0),0)/3;
+  return ini ? ((fin-ini)/ini*100) : null;
 }
 
 function renderDeptoRankings() {
-  const container = $('depto-rankings');
-  const insight   = $('depto-insight');
-  const deptos    = getDeptoData().filter(d => d.totalTasa != null && d.totalTasa > 0);
+  const container=$('depto-rankings'), insight=$('depto-insight');
+  const deptos=getDeptos().filter(d=>d.totalTasa!=null&&d.totalTasa>0);
+  if (!deptos.length) { container.innerHTML='<div class="empty-msg">Sin datos de tasa.</div>'; insight.style.display='none'; return; }
 
-  if (!deptos.length) {
-    container.innerHTML = '<div class="empty-msg">Sin datos de tasa para esta selección.</div>';
-    insight.style.display = 'none';
-    return;
-  }
+  const porTasa   = [...deptos].sort((a,b)=>(b.totalTasa||0)-(a.totalTasa||0));
+  const top5      = porTasa.slice(0,5);
+  const bot5      = [...porTasa].reverse().slice(0,5);
+  const conCambio = deptos.map(d=>({...d,cambio:calcCambio(d)})).filter(d=>d.cambio!=null);
+  const mejoraron = [...conCambio].sort((a,b)=>a.cambio-b.cambio).slice(0,5);
+  const empeoraron= [...conCambio].filter(d=>d.cambio>0).sort((a,b)=>b.cambio-a.cambio).slice(0,5);
 
-  // Ordenar por tasa promedio
-  const porTasa = [...deptos].sort((a,b) => (b.totalTasa||0) - (a.totalTasa||0));
+  const ultimoAnio=top5[0]?.ultimoAnio||'';
+  const brecha=((top5[0].totalTasa/(bot5[0].totalTasa||1))).toFixed(1);
+  insight.innerHTML=`<strong>Datos del año ${ultimoAnio}</strong> ajustados por 100,000 hab. <strong>${top5[0].depto}</strong> tiene la tasa más alta (${fmtT(top5[0].totalTasa)}/100k) y <strong>${bot5[0].depto}</strong> la más baja (${fmtT(bot5[0].totalTasa)}/100k), una diferencia de <strong>${brecha}x</strong>. ${mejoraron[0]?`<strong>${mejoraron[0].depto}</strong> es el que más mejoró en el tiempo (${mejoraron[0].cambio.toFixed(0)}% de reducción).`:''}`;
+  insight.style.display='block';
 
-  // Más peligrosos
-  const top5 = porTasa.slice(0, 5);
-  // Más seguros
-  const bot5 = [...porTasa].reverse().slice(0, 5);
-
-  // Cambio temporal
-  const conCambio = deptos
-    .map(d => ({ ...d, cambio: calcCambio(d) }))
-    .filter(d => d.cambio != null);
-
-  const mejoraron = [...conCambio].sort((a,b) => a.cambio - b.cambio).slice(0, 5);
-  const empeoraron = [...conCambio].sort((a,b) => b.cambio - a.cambio).slice(0, 5);
-
-  const ultimoAnio = porTasa[0].ultimoAnio || '';
-  const brecha = ((top5[0].totalTasa / (bot5[0].totalTasa || 1))).toFixed(1);
-  insight.innerHTML = `
-    <strong>Datos del año ${ultimoAnio}</strong> (último disponible) ajustados por 100,000 habitantes. 
-    <strong>${top5[0].depto}</strong> tiene la tasa más alta
-    (${fmtT(top5[0].totalTasa)}/100k hab.) y <strong>${bot5[0].depto}</strong>
-    la más baja (${fmtT(bot5[0].totalTasa)}/100k hab.) —
-    una diferencia de <strong>${brecha}x</strong>.
-    ${mejoraron[0] ? `<strong>${mejoraron[0].depto}</strong> es el que más mejoró en el tiempo
-    (${mejoraron[0].cambio.toFixed(0)}% de reducción).` : ''}
-  `;
-  insight.style.display = 'block';
-
-  container.innerHTML = '';
-
-  // Tarjeta: más peligrosos
-  container.appendChild(buildRankCard({
-    type:     'danger',
-    icon:     '🔴',
-    title:    'Más afectados',
-    subtitle: 'Mayor tasa promedio por 100k hab.',
-    items:    top5,
-    maxVal:   top5[0].totalTasa,
-    valFn:    d => fmtT(d.totalTasa),
-    sufijo:   '/100k',
-    barColor: '#c41e1e',
-  }));
-
-  // Tarjeta: más seguros
-  container.appendChild(buildRankCard({
-    type:     'safe',
-    icon:     '🟢',
-    title:    'Menos afectados',
-    subtitle: 'Menor tasa promedio por 100k hab.',
-    items:    bot5,
-    maxVal:   bot5[0].totalTasa,
-    valFn:    d => fmtT(d.totalTasa),
-    sufijo:   '/100k',
-    barColor: '#3ddc84',
-  }));
-
-  if (mejoraron.length) {
-    container.appendChild(buildRankCard({
-      type:     'improve',
-      icon:     '📉',
-      title:    'Mayor mejora',
-      subtitle: 'Más reducción en tasa (primeros vs últimos 3 años)',
-      items:    mejoraron,
-      maxVal:   Math.abs(mejoraron[0].cambio),
-      valFn:    d => `${d.cambio.toFixed(0)}%`,
-      sufijo:   '',
-      barColor: '#3ddc84',
-    }));
-  }
-
-  if (empeoraron.length && empeoraron[0].cambio > 0) {
-    container.appendChild(buildRankCard({
-      type:     'worsen',
-      icon:     '📈',
-      title:    'Mayor deterioro',
-      subtitle: 'Más aumento en tasa (primeros vs últimos 3 años)',
-      items:    empeoraron.filter(d => d.cambio > 0),
-      maxVal:   empeoraron[0].cambio,
-      valFn:    d => `+${d.cambio.toFixed(0)}%`,
-      sufijo:   '',
-      barColor: '#c41e1e',
-    }));
-  }
-}
-
-function buildRankCard({ type, icon, title, subtitle, items, maxVal, valFn, barColor }) {
-  const card = document.createElement('div');
-  card.className = `rank-card ${type}`;
-
-  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
-
-  card.innerHTML = `
-    <div class="rank-card-head">
-      <span class="rank-card-icon">${icon}</span>
-      <div>
-        <div class="rank-card-title">${title}</div>
-        <div class="rank-card-subtitle">${subtitle}</div>
+  container.innerHTML='';
+  const build=(opts)=>{
+    const card=document.createElement('div');
+    card.className='rank-card';
+    const medals=['🥇','🥈','🥉','4️⃣','5️⃣'];
+    const maxVal=Math.abs(opts.items[0]?parseFloat(opts.valFn(opts.items[0])):1)||1;
+    card.innerHTML=`
+      <div class="rank-card-head">
+        <span class="rank-card-icon">${opts.icon}</span>
+        <div><div class="rank-card-title">${opts.title}</div><div class="rank-card-sub">${opts.sub}</div></div>
       </div>
-    </div>
-    ${items.map((d, i) => {
-      const val = valFn(d);
-      const pct = Math.round((Math.abs(parseFloat(val)) / Math.abs(maxVal || 1)) * 100);
-      return `
-        <div class="rank-item">
-          <span class="rank-medal">${medals[i] || (i+1)}</span>
+      ${opts.items.map((d,i)=>{
+        const val=opts.valFn(d);
+        const pct=Math.round(Math.abs(parseFloat(val))/maxVal*100);
+        return `<div class="rank-item">
+          <span class="rank-medal">${medals[i]||i+1}</span>
           <span class="rank-name">${d.depto}</span>
-          <div class="rank-bar-col">
-            <div class="rank-bar-track">
-              <div class="rank-bar-fill" style="width:${pct}%;background:${barColor}"></div>
-            </div>
-          </div>
-          <span class="rank-val" style="color:${barColor}">${val}</span>
-        </div>
-      `;
-    }).join('')}
-  `;
-  return card;
+          <div class="rank-bar-col"><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${pct}%;background:${opts.color}"></div></div></div>
+          <span class="rank-val" style="color:${opts.color}">${val}</span>
+        </div>`;
+      }).join('')}`;
+    return card;
+  };
+
+  container.appendChild(build({ icon:'🔴', title:'Más afectados', sub:`Mayor tasa /100k hab. (${ultimoAnio})`, items:top5, valFn:d=>fmtT(d.totalTasa)+'/100k', color:'#C41E1E' }));
+  container.appendChild(build({ icon:'🟢', title:'Menos afectados', sub:`Menor tasa /100k hab. (${ultimoAnio})`, items:bot5, valFn:d=>fmtT(d.totalTasa)+'/100k', color:'#1A7A40' }));
+  if (mejoraron.length) container.appendChild(build({ icon:'📉', title:'Mayor mejora histórica', sub:'Más reducción de tasa (primer vs últimos 3 años)', items:mejoraron, valFn:d=>`${d.cambio.toFixed(0)}%`, color:'#1A7A40' }));
+  if (empeoraron.length) container.appendChild(build({ icon:'📈', title:'Mayor deterioro histórico', sub:'Más aumento de tasa (primer vs últimos 3 años)', items:empeoraron, valFn:d=>`+${d.cambio.toFixed(0)}%`, color:'#C41E1E' }));
 }
 
-// ─────────────────────────────────────────────────────────────
-// SECCIÓN 2: GÉNERO
-// ─────────────────────────────────────────────────────────────
+// ── GÉNERO ─────────────────────────────────────────────────────
 function renderGeneroRankings() {
-  const container = $('gender-rankings');
-  container.innerHTML = '';
+  const container=$('gender-rankings');
+  container.innerHTML='';
 
-  // Calcular totales por sexo para cada delito
-  const delitos = DATA.main.map(d => {
-    const sexoData = DATA.sexo[d.nombre] || {};
-    const totM = Object.values(sexoData['MASCULINO'] || {}).reduce((a,b)=>a+b,0);
-    const totF = Object.values(sexoData['FEMENINO']  || {}).reduce((a,b)=>a+b,0);
-    const tot  = totM + totF;
+  const delitos=DATA.main.map(d=>{
+    const sx=DATA.sexo[d.nombre]||{};
+    const totM=Object.values(sx['MASCULINO']||{}).reduce((a,b)=>a+b,0);
+    const totF=Object.values(sx['FEMENINO'] ||{}).reduce((a,b)=>a+b,0);
+    const tot=totM+totF;
     if (!tot) return null;
-    return {
-      nombre: d.nombre,
-      totM, totF, tot,
-      pctF:  tot ? (totF / tot) * 100 : 0,
-      pctM:  tot ? (totM / tot) * 100 : 0,
-      ratio: totM > 0 ? totF / totM : 0,
-    };
+    return {nombre:d.nombre,totM,totF,tot,pctF:totF/tot*100,pctM:totM/tot*100};
   }).filter(Boolean);
 
-  if (!delitos.length) {
-    container.innerHTML = '<div class="empty-msg">Sin datos de género.</div>';
-    return;
-  }
+  if (!delitos.length) { container.innerHTML='<div class="empty-msg">Sin datos.</div>'; return; }
 
-  // Filtrar si hay delito seleccionado (mostrar insight en ese caso)
-  const base = DEPTO_SELECCIONADO
-    ? delitos.filter(d => d.nombre === DEPTO_SELECCIONADO)
-    : delitos;
+  const topF = [...delitos].sort((a,b)=>b.pctF-a.pctF).slice(0,8);
+  const topM = [...delitos].sort((a,b)=>b.pctM-a.pctM).slice(0,8);
+  const brecha= [...delitos].sort((a,b)=>b.pctM-a.pctM).slice(0,10);
 
-  // Top 7 delitos donde más sufren las MUJERES
-  const topMujeres = [...delitos].sort((a,b) => b.pctF - a.pctF).slice(0, 7);
-  // Top 7 delitos donde más sufren los HOMBRES
-  const topHombres = [...delitos].sort((a,b) => b.pctM - a.pctM).slice(0, 7);
-  // Brecha de género (ratio M/F más extremo)
-  const brecha     = [...delitos].sort((a,b) => b.pctM - a.pctM);
-
-  // Card: delitos con más víctimas femeninas
-  container.appendChild(buildGeneroCard({
-    icon:   '♀',
-    color:  '#c41e1e',
-    title:  'Delitos con más víctimas femeninas',
-    sub:    '% de víctimas que son mujeres',
-    items:  topMujeres,
-    pctFn:  d => d.pctF,
-    colorM: 'var(--accent)',
-    colorF: '#c41e1e',
-  }));
-
-  // Card: delitos con más víctimas masculinas
-  container.appendChild(buildGeneroCard({
-    icon:   '♂',
-    color:  'var(--accent)',
-    title:  'Delitos con más víctimas masculinas',
-    sub:    '% de víctimas que son hombres',
-    items:  topHombres,
-    pctFn:  d => d.pctM,
-    colorM: 'var(--accent)',
-    colorF: '#c41e1e',
-  }));
-
-  // Card: brecha de género (comparativa)
-  container.appendChild(buildBrechaCard(brecha));
-}
-
-function buildGeneroCard({ icon, color, title, sub, items, pctFn, colorM, colorF }) {
-  const card = document.createElement('div');
-  card.className = 'rank-card';
-
-  card.innerHTML = `
-    <div class="rank-card-head">
-      <span class="rank-card-icon" style="color:${color};font-size:1.4rem">${icon}</span>
-      <div>
-        <div class="rank-card-title">${title}</div>
-        <div class="rank-card-subtitle">${sub}</div>
+  const buildG=(icon,color,title,sub,items,pctFn,cM,cF)=>{
+    const card=document.createElement('div');
+    card.className='rank-card';
+    card.innerHTML=`
+      <div class="rank-card-head">
+        <span class="rank-card-icon" style="color:${color}">${icon}</span>
+        <div><div class="rank-card-title">${title}</div><div class="rank-card-sub">${sub}</div></div>
       </div>
-    </div>
-    ${items.map((d, i) => {
-      const pct   = pctFn(d);
-      const pctM  = Math.round(d.pctM);
-      const pctF  = Math.round(d.pctF);
-      return `
-        <div class="gender-item">
+      ${items.map((d,i)=>{
+        const pM=Math.round(d.pctM), pF=Math.round(d.pctF);
+        return `<div class="g-item">
           <span class="g-pos">#${i+1}</span>
           <span class="g-name">${d.nombre}</span>
           <div class="g-bars">
             <div class="g-bar-row">
-              <span style="font-family:var(--font-mono);font-size:.5rem;color:${colorM};width:8px">♂</span>
-              <div class="g-bar-track">
-                <div class="g-bar-fill-m" style="width:${pctM}%;background:${colorM}"></div>
-              </div>
-              <span class="g-bar-label" style="color:${colorM}">${pctM}%</span>
+              <span class="g-bar-lbl" style="color:${cM}">♂</span>
+              <div class="g-bar-track"><div class="g-bar-fill" style="width:${pM}%;background:${cM}"></div></div>
+              <span class="g-bar-pct" style="color:${cM}">${pM}%</span>
             </div>
             <div class="g-bar-row">
-              <span style="font-family:var(--font-mono);font-size:.5rem;color:${colorF};width:8px">♀</span>
-              <div class="g-bar-track">
-                <div class="g-bar-fill-f" style="width:${pctF}%;background:${colorF}"></div>
-              </div>
-              <span class="g-bar-label" style="color:${colorF}">${pctF}%</span>
+              <span class="g-bar-lbl" style="color:${cF}">♀</span>
+              <div class="g-bar-track"><div class="g-bar-fill" style="width:${pF}%;background:${cF}"></div></div>
+              <span class="g-bar-pct" style="color:${cF}">${pF}%</span>
             </div>
           </div>
-          <span class="g-pct" style="color:${color}">${pct.toFixed(0)}%</span>
-        </div>
-      `;
-    }).join('')}
-  `;
-  return card;
-}
+          <span class="g-pct" style="color:${color}">${Math.round(pctFn(d))}%</span>
+        </div>`;
+      }).join('')}`;
+    return card;
+  };
 
-function buildBrechaCard(items) {
-  const card = document.createElement('div');
-  card.className = 'rank-card';
+  container.appendChild(buildG('♀','#C41E1E','Más víctimas femeninas','% de víctimas que son mujeres',topF,d=>d.pctF,'#1A5C8A','#C41E1E'));
+  container.appendChild(buildG('♂','#1A5C8A','Más víctimas masculinas','% de víctimas que son hombres',topM,d=>d.pctM,'#1A5C8A','#C41E1E'));
 
-  card.innerHTML = `
+  const bcard=document.createElement('div');
+  bcard.className='rank-card';
+  bcard.innerHTML=`
     <div class="rank-card-head">
       <span class="rank-card-icon">⚖️</span>
-      <div>
-        <div class="rank-card-title">Brecha de género por categoría</div>
-        <div class="rank-card-subtitle">Distribución hombre / mujer — barra centrada</div>
-      </div>
+      <div><div class="rank-card-title">Brecha de género</div>
+      <div class="rank-card-sub">Distribución ♂ izquierda · ♀ derecha · centro = 50/50</div></div>
     </div>
-    <div style="padding:10px 20px 4px;display:flex;gap:16px;font-family:var(--font-mono);font-size:.58rem;color:var(--muted)">
-      <span style="color:var(--accent)">♂ Hombres ←</span>
-      <span style="flex:1;text-align:center">|</span>
-      <span style="color:#c41e1e">→ Mujeres ♀</span>
+    <div style="padding:8px 18px 6px;display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:.58rem;color:var(--muted);">
+      <span style="color:#1A5C8A">♂ ←</span><span>|</span><span style="color:#C41E1E">→ ♀</span>
     </div>
-    ${items.slice(0,10).map((d, i) => {
-      // pctM y pctF centrados: 50% = equilibrio
-      const halfM = Math.round(d.pctM / 2);   // cuánto se extiende hacia la izq
-      const halfF = Math.round(d.pctF / 2);   // cuánto se extiende hacia la der
-      return `
-        <div class="brecha-item">
-          <span class="b-name">${d.nombre}</span>
-          <div class="b-track">
-            <div class="b-fill-m" style="width:${halfM}%;background:var(--accent)"></div>
-            <div class="b-fill-f" style="width:${halfF}%;background:#c41e1e"></div>
-            <div class="b-center"></div>
-          </div>
-          <span class="b-ratio" style="color:${d.pctM > d.pctF ? 'var(--accent)' : '#c41e1e'}">
-            ${Math.round(Math.max(d.pctM, d.pctF))}%
-            ${d.pctM > d.pctF ? '♂' : '♀'}
-          </span>
+    ${brecha.map(d=>{
+      const hM=Math.round(d.pctM/2), hF=Math.round(d.pctF/2);
+      return `<div class="b-item">
+        <span class="b-name">${d.nombre}</span>
+        <div class="b-track">
+          <div class="b-fill-m" style="width:${hM}%"></div>
+          <div class="b-fill-f" style="width:${hF}%"></div>
+          <div class="b-center"></div>
         </div>
-      `;
-    }).join('')}
-  `;
-  return card;
+        <span class="b-pct" style="color:${d.pctM>d.pctF?'#1A5C8A':'#C41E1E'}">
+          ${Math.round(Math.max(d.pctM,d.pctF))}% ${d.pctM>d.pctF?'♂':'♀'}
+        </span>
+      </div>`;
+    }).join('')}`;
+  container.appendChild(bcard);
 }
 
 init();
