@@ -13,14 +13,14 @@
     :root {
       --bg:        #061520;
       --card:      #0d2b3c;
-      --border:    #1a4060;
+      --border:    #2a5070;
       --yellow:    #f5edd6;
       --red:       #8b0012;
       --red2:      #c41e1e;
       --accent:    #5a90b0;
       --green:     #3ddc84;
-      --text:      #f5edd6;
-      --muted:     #7aafc8;
+      --text:      #ffffff;
+      --muted:     #d0dde8;
       --font-head: 'Playfair Display', Georgia, serif;
       --font-body: 'Source Serif 4', Georgia, serif;
       --font-mono: 'JetBrains Mono', monospace;
@@ -485,7 +485,7 @@ function drawChart(id, years, values, peakIdx, t) {
         legend: { display: false },
         tooltip: {
           backgroundColor: '#0d2b3c',
-          titleColor: '#7aafc8',
+          titleColor: '#d0dde8',
           bodyColor: '#f5edd6',
           bodyFont:  { family: 'JetBrains Mono', size: 11 },
           titleFont: { family: 'JetBrains Mono', size: 10 },
@@ -497,12 +497,12 @@ function drawChart(id, years, values, peakIdx, t) {
       scales: {
         x: {
           grid: { color: '#0d2b3c', lineWidth: 0.5 },
-          ticks: { color: '#7aafc8', font: { family: 'JetBrains Mono', size: 8 }, maxTicksLimit: 6, maxRotation: 0 },
+          ticks: { color: '#d0dde8', font: { family: 'JetBrains Mono', size: 8 }, maxTicksLimit: 6, maxRotation: 0 },
         },
         y: {
           grid: { color: '#0d2b3c', lineWidth: 0.5 },
           ticks: {
-            color: '#7aafc8', font: { family: 'JetBrains Mono', size: 8 }, maxTicksLimit: 4,
+            color: '#d0dde8', font: { family: 'JetBrains Mono', size: 8 }, maxTicksLimit: 4,
             callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v,
           },
           beginAtZero: false,

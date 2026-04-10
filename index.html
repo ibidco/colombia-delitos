@@ -14,14 +14,14 @@
       --bg:        #061520;
       --card:      #0d2b3c;
       --card2:     #12354a;
-      --border:    #1a4060;
+      --border:    #2a5070;
       --yellow:    #f5edd6;
       --red:       #8b0012;
       --red2:      #c41e1e;
       --accent:    #5a90b0;
       --green:     #3ddc84;
-      --text:      #f5edd6;
-      --muted:     #7aafc8;
+      --text:      #ffffff;
+      --muted:     #d0dde8;
       --font-head: 'Playfair Display', Georgia, serif;
       --font-body: 'Source Serif 4', Georgia, serif;
       --font-mono: 'JetBrains Mono', monospace;
@@ -425,6 +425,7 @@
       <button class="tab-btn" onclick="switchTab('sexo',this)">👤 Por sexo</button>
       <button class="tab-btn" onclick="switchTab('etario',this)">🎂 Por edad</button>
       <button class="tab-btn" onclick="switchTab('judicial',this)">⚖️ Etapa judicial</button>
+      <button class="tab-btn" onclick="switchTab('deptoanal',this)">📍 Análisis departamento</button>
     </div>
 
     <!-- TAB: Evolución anual -->
@@ -438,6 +439,10 @@
           </div>
         </div>
         <div class="chart-tall"><canvas id="chart-anual"></canvas></div>
+        <div style="margin-top:10px;font-family:var(--font-mono);font-size:0.72rem;color:#d0dde8;display:flex;align-items:center;gap:6px;">
+          <span style="background:var(--accent);border-radius:50%;width:8px;height:8px;display:inline-block;flex-shrink:0"></span>
+          Datos a nivel <strong style="color:#fff">nacional</strong> — ajustados por población total de Colombia (DANE)
+        </div>
       </div>
     </div>
 
@@ -490,6 +495,50 @@
       </div>
     </div>
 
+    <!-- TAB: Análisis por departamento -->
+    <div class="tab-panel" id="tab-deptoanal">
+      <!-- Selector de departamento -->
+      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:20px;">
+        <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:200px;">
+          <label style="font-family:var(--font-mono);font-size:0.65rem;letter-spacing:.1em;text-transform:uppercase;color:#d0dde8;">
+            Departamento
+          </label>
+          <select id="sel-depto" style="background:var(--card2);border:1px solid var(--border);color:#fff;padding:10px 14px;font-family:var(--font-mono);font-size:0.78rem;outline:none;appearance:none;">
+            <option value="">— Selecciona un departamento —</option>
+          </select>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:#d0dde8;padding-bottom:12px;">
+          Compara con el promedio nacional →
+        </div>
+      </div>
+
+      <!-- KPIs del departamento -->
+      <div id="da-kpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:20px;"></div>
+
+      <!-- Gráfico comparativo -->
+      <div class="chart-box" id="da-chart-box" style="display:none;">
+        <div class="chart-box-header">
+          <h3 id="da-chart-title">Evolución del departamento vs. promedio nacional</h3>
+          <div class="chart-legend">
+            <div class="leg-item"><div class="leg-dot" style="background:#f5edd6"></div><span id="da-leg-depto">Departamento</span></div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--accent);opacity:.6"></div>Promedio nacional</div>
+          </div>
+        </div>
+        <div class="chart-tall"><canvas id="chart-deptoanal"></canvas></div>
+        <div style="margin-top:10px;font-family:var(--font-mono);font-size:0.7rem;color:#d0dde8;">
+          Tasa por 100,000 habitantes · Fuente: Fiscalía General · Población: DANE
+        </div>
+      </div>
+
+      <!-- Insight automático -->
+      <div id="da-insight" style="display:none;background:var(--card2);border:1px solid var(--border);border-left:3px solid var(--yellow);padding:16px 20px;margin-bottom:20px;font-size:0.88rem;line-height:1.7;color:#fff;"></div>
+
+      <!-- Prompt si no hay departamento seleccionado -->
+      <div id="da-empty" style="text-align:center;padding:48px 0;color:#d0dde8;font-style:italic;font-size:0.9rem;">
+        Selecciona un departamento para ver su análisis detallado
+      </div>
+    </div>
+
     <!-- Otras categorías -->
     <div class="other-label">Otras categorías — haz clic para explorar</div>
     <div class="other-grid" id="other-grid"></div>
@@ -513,7 +562,7 @@ const fmt = n =>
 
 // Paleta de colores
 const PALETTE = [
-  '#5a90b0','#f5edd6','#c41e1e','#8b0012','#7aafc8',
+  '#5a90b0','#f5edd6','#c41e1e','#8b0012','#d0dde8',
   '#a0c8d8','#d4a0a0','#e8d0b0','#3d7a9a','#b04040',
 ];
 
@@ -717,6 +766,7 @@ function select(d) {
   renderEtario(nombre);
   renderJudicial(nombre);
   renderOtros(nombre);
+  poblarSelectorDepto(nombre);
 
   $('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -849,7 +899,7 @@ function renderDepto(nombre) {
         legend: { display: false },
         tooltip: {
           backgroundColor: '#0d2b3c',
-          titleColor: '#7aafc8', bodyColor: '#f5edd6', padding: 12,
+          titleColor: '#d0dde8', bodyColor: '#f5edd6', padding: 12,
           bodyFont:  { family: 'JetBrains Mono', size: 12 },
           titleFont: { family: 'JetBrains Mono', size: 10 },
           callbacks: {
@@ -868,7 +918,7 @@ function renderDepto(nombre) {
         x: {
           grid: { color: '#0d2b3c', lineWidth: 0.5 },
           ticks: {
-            color: '#7aafc8', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 6,
+            color: '#d0dde8', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 6,
             callback: v => usarTasa ? v.toFixed(0) : (v >= 1000 ? (v/1000).toFixed(0)+'K' : v),
           },
           beginAtZero: true,
@@ -940,7 +990,7 @@ function renderSexo(nombre) {
         ...chartOpts({}).plugins,
         legend: {
           display: true,
-          labels: { color: '#7a8ba8', font: { family: 'JetBrains Mono', size: 10 }, boxWidth: 10 },
+          labels: { color: '#d0dde8', font: { family: 'JetBrains Mono', size: 10 }, boxWidth: 10 },
         },
       },
     },
@@ -1010,7 +1060,7 @@ function renderJudicial(nombre) {
 
   const etapas = Object.entries(jData.etapas).slice(0, 6);
   const total  = etapas.reduce((s,[,v])=>s+v, 0);
-  const colors = ['#5a90b0','#f5edd6','#c41e1e','#8b0012','#7aafc8','#a0c8d8'];
+  const colors = ['#5a90b0','#f5edd6','#c41e1e','#8b0012','#d0dde8','#a0c8d8'];
 
   mkChart('chart-judicial', {
     type: 'doughnut',
@@ -1086,7 +1136,7 @@ function chartOpts({ tooltipLabel, yCallback } = {}) {
       legend: { display: false },
       tooltip: {
         backgroundColor: '#0d2b3c',
-        titleColor: '#7aafc8', bodyColor: '#f5edd6', padding: 12,
+        titleColor: '#d0dde8', bodyColor: '#f5edd6', padding: 12,
         bodyFont:  { family: 'JetBrains Mono', size: 12 },
         titleFont: { family: 'JetBrains Mono', size: 10 },
         callbacks: {
@@ -1098,12 +1148,12 @@ function chartOpts({ tooltipLabel, yCallback } = {}) {
     scales: {
       x: {
         grid: { color: '#0d2b3c', lineWidth: 0.5 },
-        ticks: { color: '#7aafc8', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 10, maxRotation: 30 },
+        ticks: { color: '#d0dde8', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 10, maxRotation: 30 },
       },
       y: {
         grid: { color: '#0d2b3c', lineWidth: 0.5 },
         ticks: {
-          color: '#7aafc8', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 5,
+          color: '#d0dde8', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 5,
           callback: yCallback || (v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v),
         },
         beginAtZero: true,
@@ -1119,6 +1169,199 @@ function clearResult() {
   input.value = '';
   input.focus();
 }
+
+// ── TAB 6: ANÁLISIS POR DEPARTAMENTO ──────────────────────────
+let _deptoAnalActual = null;
+
+function renderDeptoAnal(nombre) {
+  if (!_selectActual) return;
+  const delito   = _selectActual.nombre;
+  _deptoAnalActual = nombre;
+
+  const daEmpty    = $('da-empty');
+  const daKpis     = $('da-kpis');
+  const daChartBox = $('da-chart-box');
+  const daInsight  = $('da-insight');
+
+  if (!nombre) {
+    daEmpty.style.display    = 'block';
+    daKpis.style.display     = 'none';
+    daChartBox.style.display = 'none';
+    daInsight.style.display  = 'none';
+    return;
+  }
+
+  // Buscar datos del departamento para este delito
+  const deptos  = D.depto[delito] || [];
+  const dData   = deptos.find(d => d.depto === nombre);
+
+  if (!dData || !dData.tasaPorAnio) {
+    daEmpty.innerHTML     = `Sin datos de tasa para <strong>${nombre}</strong> en este delito.`;
+    daEmpty.style.display = 'block';
+    daKpis.style.display  = 'none';
+    daChartBox.style.display = 'none';
+    daInsight.style.display  = 'none';
+    return;
+  }
+
+  daEmpty.style.display = 'none';
+
+  // Calcular tasa promedio nacional por año (sumando todos los deptos)
+  const aniosDisp = Object.keys(dData.tasaPorAnio).map(Number).sort((a,b)=>a-b);
+  const tasaDepto = aniosDisp.map(y => dData.tasaPorAnio[y]);
+
+  // Promedio nacional: usar tasaPorAnio del delito del data principal
+  const dPrincipal = _selectActual;
+  const tasaNac    = dPrincipal.tasaPorAnio
+    ? aniosDisp.map(y => dPrincipal.tasaPorAnio[String(y)] || null)
+    : null;
+
+  // Último año disponible
+  const ultimoAnio  = aniosDisp.at(-1);
+  const tasaUltima  = dData.tasaPorAnio[ultimoAnio];
+  const tasaNacUlt  = dPrincipal.tasaPorAnio?.[String(ultimoAnio)];
+
+  // Tendencia del departamento
+  const aniosT   = aniosDisp.slice(-2);
+  const tendDep  = aniosT.length >= 2
+    ? ((dData.tasaPorAnio[aniosT[1]] - dData.tasaPorAnio[aniosT[0]]) / dData.tasaPorAnio[aniosT[0]] * 100)
+    : 0;
+
+  // KPIs
+  daKpis.style.display = 'grid';
+  daKpis.innerHTML = `
+    <div style="background:var(--card);padding:16px 20px">
+      <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:600;color:#f5c842">${fmtT(tasaUltima)}</div>
+      <div style="font-size:0.65rem;color:#d0dde8;text-transform:uppercase;letter-spacing:.07em;margin-top:3px">Tasa ${ultimoAnio} /100k</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:#d0dde8;margin-top:2px">${nombre}</div>
+    </div>
+    <div style="background:var(--card);padding:16px 20px">
+      <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:600;color:var(--accent)">${tasaNacUlt ? fmtT(tasaNacUlt) : '—'}</div>
+      <div style="font-size:0.65rem;color:#d0dde8;text-transform:uppercase;letter-spacing:.07em;margin-top:3px">Promedio nacional ${ultimoAnio}</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:#d0dde8;margin-top:2px">Colombia</div>
+    </div>
+    <div style="background:var(--card);padding:16px 20px">
+      <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:600;color:${tasaUltima > (tasaNacUlt||0) ? '#f87171' : '#3ddc84'}">
+        ${tasaNacUlt ? (tasaUltima / tasaNacUlt).toFixed(1)+'x' : '—'}
+      </div>
+      <div style="font-size:0.65rem;color:#d0dde8;text-transform:uppercase;letter-spacing:.07em;margin-top:3px">vs. promedio nacional</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:#d0dde8;margin-top:2px">${tasaUltima > (tasaNacUlt||0) ? 'Por encima' : 'Por debajo'}</div>
+    </div>
+    <div style="background:var(--card);padding:16px 20px">
+      <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:600;color:${tendDep > 5 ? '#f87171' : tendDep < -5 ? '#3ddc84' : '#d0dde8'}">
+        ${tendDep > 0 ? '▲ +' : '▼ '}${Math.abs(tendDep).toFixed(0)}%
+      </div>
+      <div style="font-size:0.65rem;color:#d0dde8;text-transform:uppercase;letter-spacing:.07em;margin-top:3px">Tendencia último año</div>
+    </div>
+    <div style="background:var(--card);padding:16px 20px">
+      <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:600;color:#f5c842">${fmt(dData.total)}</div>
+      <div style="font-size:0.65rem;color:#d0dde8;text-transform:uppercase;letter-spacing:.07em;margin-top:3px">Total víctimas</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:#d0dde8;margin-top:2px">Histórico absoluto</div>
+    </div>
+  `;
+
+  // Gráfico comparativo
+  daChartBox.style.display = 'block';
+  $('da-chart-title').textContent = `${nombre} vs. promedio nacional — ${delito}`;
+  $('da-leg-depto').textContent   = nombre;
+
+  if (CHARTS['chart-deptoanal']) { CHARTS['chart-deptoanal'].destroy(); delete CHARTS['chart-deptoanal']; }
+  const ctx  = $('chart-deptoanal').getContext('2d');
+  const gDep = ctx.createLinearGradient(0,0,0,320);
+  gDep.addColorStop(0, '#f5edd622'); gDep.addColorStop(1, '#f5edd600');
+
+  const datasets = [{
+    label: nombre,
+    data:  tasaDepto,
+    borderColor: '#f5edd6', borderWidth: 2.5,
+    backgroundColor: gDep, fill: true, tension: 0.35,
+    pointRadius: 3, pointHoverRadius: 6,
+    pointBackgroundColor: '#f5edd6',
+  }];
+
+  if (tasaNac) {
+    datasets.push({
+      label: 'Promedio nacional',
+      data:  tasaNac,
+      borderColor: '#5a90b088', borderWidth: 1.5,
+      borderDash: [6, 3],
+      backgroundColor: 'transparent', fill: false, tension: 0.35,
+      pointRadius: 0, pointHoverRadius: 4,
+    });
+  }
+
+  CHARTS['chart-deptoanal'] = new Chart(ctx, {
+    type: 'line',
+    data: { labels: aniosDisp, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 500 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0d2b3c', titleColor: '#d0dde8',
+          bodyColor: '#fff', padding: 12,
+          bodyFont: { family: 'JetBrains Mono', size: 12 },
+          titleFont: { family: 'JetBrains Mono', size: 10 },
+          callbacks: {
+            title: items => `Año ${items[0].label}`,
+            label: c => ` ${c.dataset.label}: ${c.parsed.y?.toFixed(2)} /100k hab.`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: '#0d2b3c', lineWidth: 0.5 },
+          ticks: { color: '#d0dde8', font: { family: 'JetBrains Mono', size: 10 }, maxTicksLimit: 10 },
+        },
+        y: {
+          grid: { color: '#0d2b3c', lineWidth: 0.5 },
+          ticks: {
+            color: '#d0dde8', font: { family: 'JetBrains Mono', size: 10 }, maxTicksLimit: 6,
+            callback: v => v.toFixed(0),
+          },
+          beginAtZero: false,
+        },
+      },
+    },
+  });
+
+  // Insight automático
+  daInsight.style.display = 'block';
+  const encimaPct = tasaNacUlt ? ((tasaUltima / tasaNacUlt - 1) * 100) : 0;
+  const rankDep   = [...deptos].sort((a,b)=>(b.totalTasa||0)-(a.totalTasa||0)).findIndex(d=>d.depto===nombre)+1;
+  daInsight.innerHTML = `
+    En ${ultimoAnio}, <strong>${nombre}</strong> registró una tasa de
+    <strong>${fmtT(tasaUltima)} víctimas por 100,000 habitantes</strong> de ${delito.toLowerCase()}.
+    ${tasaNacUlt ? `Eso es un <strong>${Math.abs(encimaPct).toFixed(0)}% ${encimaPct > 0 ? 'por encima' : 'por debajo'}</strong>
+    del promedio nacional (${fmtT(tasaNacUlt)}/100k).` : ''}
+    Ocupa el puesto <strong>#${rankDep}</strong> de ${deptos.length} departamentos.
+    ${tendDep > 10 ? `⚠️ La tendencia es <strong>al alza</strong> — subió ${tendDep.toFixed(0)}% en el último año.`
+    : tendDep < -10 ? `✅ La tendencia es <strong>a la baja</strong> — bajó ${Math.abs(tendDep).toFixed(0)}% en el último año.`
+    : ''}
+  `;
+}
+
+function poblarSelectorDepto(delito) {
+  const sel    = $('sel-depto');
+  const deptos = D.depto[delito] || [];
+  const sorted = [...deptos].sort((a,b) => a.depto.localeCompare(b.depto));
+  sel.innerHTML = '<option value="">— Selecciona un departamento —</option>' +
+    sorted.map(d => `<option value="${d.depto}">${d.depto}</option>`).join('');
+
+  // Restaurar selección anterior si aplica
+  if (_deptoAnalActual && sorted.find(d => d.depto === _deptoAnalActual)) {
+    sel.value = _deptoAnalActual;
+    renderDeptoAnal(_deptoAnalActual);
+  } else {
+    _deptoAnalActual = null;
+    renderDeptoAnal(null);
+  }
+
+  sel.onchange = () => renderDeptoAnal(sel.value);
+}
+
+const fmtT = n => n != null ? n.toFixed(1) : '—';
 
 // Inicializar toggle global con tasa como default
 $('gbtn-tasa').classList.add('active');

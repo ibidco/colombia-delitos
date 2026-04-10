@@ -13,14 +13,14 @@
       --bg:        #061520;
       --card:      #0d2b3c;
       --card2:     #12354a;
-      --border:    #1a4060;
+      --border:    #2a5070;
       --yellow:    #f5edd6;
       --red:       #8b0012;
       --red2:      #c41e1e;
       --accent:    #5a90b0;
       --green:     #3ddc84;
-      --text:      #f5edd6;
-      --muted:     #7aafc8;
+      --text:      #ffffff;
+      --muted:     #d0dde8;
       --font-head: 'Playfair Display', Georgia, serif;
       --font-body: 'Source Serif 4', Georgia, serif;
       --font-mono: 'JetBrains Mono', monospace;
@@ -403,21 +403,24 @@ function renderTodo() {
 // ─────────────────────────────────────────────────────────────
 function getDeptoData() {
   if (DEPTO_SELECCIONADO) {
-    return DATA.depto[DEPTO_SELECCIONADO] || [];
+    const raw = DATA.depto[DEPTO_SELECCIONADO] || [];
+    return raw.map(d => {
+      const anios      = Object.keys(d.tasaPorAnio || {}).map(Number).sort((a,b)=>a-b);
+      const ultimoAnio = anios.at(-1);
+      return { ...d, totalTasa: ultimoAnio ? d.tasaPorAnio[ultimoAnio] : null, ultimoAnio };
+    });
   }
   // Todos los delitos: sumar víctimas y tasas por departamento
   const mapa = {};
   for (const [delito, deptos] of Object.entries(DATA.depto)) {
     for (const d of deptos) {
       if (!mapa[d.depto]) {
-        mapa[d.depto] = { depto: d.depto, total: 0, tasaSum: 0, tasaCount: 0, porAnio: {}, tasaPorAnio: {} };
+        mapa[d.depto] = { depto: d.depto, total: 0, tasaPorAnio: {}, porAnio: {} };
       }
       mapa[d.depto].total += d.total;
-      // Sumar tasas por año
       if (d.tasaPorAnio) {
         for (const [anio, tasa] of Object.entries(d.tasaPorAnio)) {
           mapa[d.depto].tasaPorAnio[anio] = (mapa[d.depto].tasaPorAnio[anio] || 0) + tasa;
-          mapa[d.depto].tasaCount++;
         }
       }
       for (const [anio, vic] of Object.entries(d.porAnio || {})) {
@@ -426,8 +429,11 @@ function getDeptoData() {
     }
   }
   return Object.values(mapa).map(d => {
-    const tasas = Object.values(d.tasaPorAnio);
-    d.totalTasa = tasas.length ? tasas.reduce((a,b)=>a+b,0) / tasas.length : null;
+    const anios    = Object.keys(d.tasaPorAnio).map(Number).sort((a,b) => a-b);
+    const ultimoAnio = anios.at(-1);
+    // Usar ÚLTIMO AÑO disponible, no promedio
+    d.totalTasa  = ultimoAnio ? d.tasaPorAnio[ultimoAnio] : null;
+    d.ultimoAnio = ultimoAnio;
     return d;
   });
 }
@@ -470,14 +476,15 @@ function renderDeptoRankings() {
   const mejoraron = [...conCambio].sort((a,b) => a.cambio - b.cambio).slice(0, 5);
   const empeoraron = [...conCambio].sort((a,b) => b.cambio - a.cambio).slice(0, 5);
 
-  // Insight automático
-  const brecha = ((top5[0].totalTasa / bot5[0].totalTasa) || 1).toFixed(1);
+  const ultimoAnio = porTasa[0].ultimoAnio || '';
+  const brecha = ((top5[0].totalTasa / (bot5[0].totalTasa || 1))).toFixed(1);
   insight.innerHTML = `
+    <strong>Datos del año ${ultimoAnio}</strong> (último disponible) ajustados por 100,000 habitantes. 
     <strong>${top5[0].depto}</strong> tiene la tasa más alta
     (${fmtT(top5[0].totalTasa)}/100k hab.) y <strong>${bot5[0].depto}</strong>
     la más baja (${fmtT(bot5[0].totalTasa)}/100k hab.) —
     una diferencia de <strong>${brecha}x</strong>.
-    ${mejoraron[0] ? `<strong>${mejoraron[0].depto}</strong> es el departamento que más mejoró
+    ${mejoraron[0] ? `<strong>${mejoraron[0].depto}</strong> es el que más mejoró en el tiempo
     (${mejoraron[0].cambio.toFixed(0)}% de reducción).` : ''}
   `;
   insight.style.display = 'block';
