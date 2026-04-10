@@ -861,19 +861,21 @@ function renderDepto(nombre) {
     return;
   }
 
-  // Ordenar por tasa promedio o por total absoluto
+  // Ordenar según el modo — usar último año, no total histórico
   const sorted = usarTasa
     ? [...base].sort((a, b) => (b.totalTasa || 0) - (a.totalTasa || 0))
-    : base;
+    : [...base].sort((a, b) => (b.ultimoValor || 0) - (a.ultimoValor || 0));
 
   const labels = sorted.map(d => d.depto);
-  const values = sorted.map(d => usarTasa ? (d.totalTasa || 0) : d.total);
+  const values = sorted.map(d => usarTasa ? (d.totalTasa || 0) : (d.ultimoValor || 0));
   const max    = Math.max(...values);
+
+  const ultimoAnio = sorted[0]?.ultimoAnio || '';
 
   // Actualizar título
   $('depto-chart-title').textContent = usarTasa
-    ? 'Top departamentos — promedio tasa por 100,000 hab.'
-    : 'Top departamentos — total histórico de víctimas';
+    ? `Top departamentos — tasa por 100,000 hab. (${ultimoAnio})`
+    : `Top departamentos — víctimas absolutas (${ultimoAnio})`;
 
   // Destruir y recrear canvas para evitar bugs de resize
   const wrap = $('chart-depto').parentElement;
@@ -931,7 +933,7 @@ function renderDepto(nombre) {
   const list = $('depto-list');
   list.innerHTML = '';
   sorted.forEach((d, i) => {
-    const val    = usarTasa ? (d.totalTasa || 0) : d.total;
+    const val    = usarTasa ? (d.totalTasa || 0) : (d.ultimoValor || 0);
     const pct    = Math.round((val / max) * 100);
     const valStr = usarTasa ? val.toFixed(1) + '/100k' : fmt(val);
     const el     = document.createElement('div');
