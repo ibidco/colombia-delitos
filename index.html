@@ -271,6 +271,26 @@
       color: var(--border); margin-top: 2px;
     }
 
+    /* ── EXPORTAR INSTAGRAM ──────────────────────── */
+    .btn-export {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); padding: 5px 12px;
+      font-family: var(--font-body); font-size: 0.72rem; font-weight: 500;
+      cursor: pointer; border-radius: 2px;
+      transition: border-color .15s, color .15s, background .15s;
+      flex-shrink: 0;
+    }
+    .btn-export:hover { border-color: var(--navy); color: var(--navy); background: var(--cream); }
+    .btn-export:active { background: var(--border2); }
+    .btn-export svg { width: 13px; height: 13px; }
+    .btn-export.loading { opacity: .5; cursor: wait; }
+
+    .chart-card-head-row {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 12px;
+    }
+
     /* ── TABS ────────────────────────────────────── */
     .tabs-bar {
       background: var(--white); border-bottom: 2px solid var(--border2);
@@ -590,9 +610,20 @@
   <div class="tab-panel active" id="tab-anual">
     <div class="chart-card">
       <div class="chart-card-head">
-        <div class="chart-card-eyebrow">Colombia · Nacional</div>
-        <div class="chart-card-title" id="anual-title">Evolución histórica de víctimas</div>
-        <div class="chart-card-note" id="anual-note">—</div>
+        <div class="chart-card-head-row">
+          <div>
+            <div class="chart-card-eyebrow">Colombia · Nacional</div>
+            <div class="chart-card-title" id="anual-title">Evolución histórica de víctimas</div>
+            <div class="chart-card-note" id="anual-note">—</div>
+          </div>
+          <button class="btn-export" id="btn-exp-anual" onclick="exportIG('chart-anual','anual')" title="Exportar para Instagram (1080×1350)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            Exportar IG
+          </button>
+        </div>
       </div>
       <div class="chart-card-body">
         <div class="chart-tall" id="anual-wrap">
@@ -631,8 +662,16 @@
   <div class="tab-panel" id="tab-sexo">
     <div class="chart-card">
       <div class="chart-card-head">
-        <div class="chart-card-eyebrow">Víctimas por sexo</div>
-        <div class="chart-card-title">Evolución anual — hombres vs. mujeres</div>
+        <div class="chart-card-head-row">
+          <div>
+            <div class="chart-card-eyebrow">Víctimas por sexo</div>
+            <div class="chart-card-title">Evolución anual — hombres vs. mujeres</div>
+          </div>
+          <button class="btn-export" onclick="exportIG('chart-sexo','sexo')" title="Exportar para Instagram">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Exportar IG
+          </button>
+        </div>
       </div>
       <div class="chart-card-body">
         <div class="chart-tall"><canvas id="chart-sexo"></canvas></div>
@@ -646,8 +685,16 @@
   <div class="tab-panel" id="tab-etario">
     <div class="chart-card">
       <div class="chart-card-head">
-        <div class="chart-card-eyebrow">Víctimas por grupo etario</div>
-        <div class="chart-card-title">Distribución total histórica por edad</div>
+        <div class="chart-card-head-row">
+          <div>
+            <div class="chart-card-eyebrow">Víctimas por grupo etario</div>
+            <div class="chart-card-title">Distribución total histórica por edad</div>
+          </div>
+          <button class="btn-export" onclick="exportIG('chart-etario','etario')" title="Exportar para Instagram">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Exportar IG
+          </button>
+        </div>
       </div>
       <div class="chart-card-body">
         <div class="chart-med"><canvas id="chart-etario"></canvas></div>
@@ -1568,6 +1615,158 @@ function clearResult() {
 }
 
 $('gbtn-tasa').classList.add('active');
+
+// ─── EXPORTAR PARA INSTAGRAM (1080×1350) ──────────────────────
+async function exportIG(chartKey, tipo) {
+  const existing = CHARTS[chartKey];
+  if (!existing || !_selectActual) return;
+
+  // Feedback en el botón
+  const btn = document.querySelector(`.btn-export[onclick*="'${chartKey}'"]`);
+  if (btn) { btn.classList.add('loading'); btn.textContent = 'Generando…'; }
+
+  await document.fonts.ready;
+
+  const W = 1080, H = 1350, PAD = 64;
+  const out = document.createElement('canvas');
+  out.width = W; out.height = H;
+  const ctx = out.getContext('2d');
+
+  // FONDO CREMA
+  ctx.fillStyle = '#F5EDD6';
+  ctx.fillRect(0, 0, W, H);
+
+  // HEADER NAVY
+  const HDR_H = 310;
+  ctx.fillStyle = '#0D2B3C';
+  ctx.fillRect(0, 0, W, HDR_H);
+  ctx.fillStyle = '#C41E1E';
+  ctx.fillRect(0, HDR_H, W, 8);
+
+  // Minibandera
+  [['#F5C842',0],['#1A4060',22],['#C41E1E',44]].forEach(([c,ox]) => {
+    ctx.fillStyle = c; ctx.fillRect(PAD + ox, 62, 16, 38);
+  });
+
+  // Marca
+  ctx.fillStyle = '#8AACBF';
+  ctx.font = '500 26px DM Mono, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('COLOMBIA EN DATOS', PAD + 70, 88);
+
+  // Título delito
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '700 60px Fraunces, Georgia, serif';
+  const titleEndY = wrapTextIG(ctx, _selectActual.nombre, PAD, 172, W - PAD*2 - 20, 70);
+
+  // Subtítulo
+  const subs = { anual:'Evolución histórica · ajustado por 100,000 hab.', sexo:'Víctimas por sexo · hombres vs. mujeres', etario:'Distribución por grupo de edad' };
+  ctx.fillStyle = '#8AACBF';
+  ctx.font = '400 28px DM Sans, sans-serif';
+  ctx.fillText(subs[tipo] || '', PAD, Math.max(titleEndY + 12, 278));
+
+  // ÁREA GRÁFICO
+  const chartTopY = HDR_H + 8 + 44;
+  const chartW    = W - PAD * 2;
+  const chartH    = 760;
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(PAD, chartTopY, chartW, chartH);
+
+  // Render chart en canvas temporal
+  const tmp = document.createElement('canvas');
+  tmp.width = chartW; tmp.height = chartH;
+
+  await new Promise(resolve => {
+    const srcData = existing.data;
+    new Chart(tmp.getContext('2d'), {
+      type: existing.config.type,
+      data: {
+        labels: srcData.labels,
+        datasets: srcData.datasets.map(ds => ({
+          ...ds,
+          borderWidth: existing.config.type==='line' ? 4 : ds.borderWidth,
+          pointRadius: Array.isArray(ds.pointRadius)
+            ? ds.pointRadius.map(r => r>0 ? r*1.6 : 0)
+            : (ds.pointRadius||0)*1.6,
+          pointHoverRadius: 0,
+        })),
+      },
+      options: {
+        responsive: false, maintainAspectRatio: false,
+        animation: { duration:0, onComplete: ()=>{ ctx.drawImage(tmp, PAD, chartTopY); resolve(); } },
+        plugins: { legend:{display:false}, tooltip:{enabled:false} },
+        scales: existing.config.type==='doughnut' ? {} : {
+          x: { grid:{color:'#E8E4D8',lineWidth:1.5}, border:{display:false},
+               ticks:{color:'#4A6880',font:{size:22,family:'DM Sans',weight:'500'},maxTicksLimit:10,maxRotation:0} },
+          y: { grid:{color:'#E8E4D8',lineWidth:1.5}, border:{display:false},
+               ticks:{color:'#4A6880',font:{size:22,family:'DM Sans',weight:'500'},maxTicksLimit:6,
+                 callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v},
+               beginAtZero:false },
+        },
+      },
+    });
+  });
+
+  // KPIs
+  const kpiTopY = chartTopY + chartH + 28;
+  const kpiH    = 116;
+  const kpiData = [
+    { val:$('k-peak-val')?.textContent||'—', lbl:$('k-peak-lbl')?.textContent||'Peak',     sub:$('k-peak-year')?.textContent||'' },
+    { val:$('k-trend')?.textContent   ||'—', lbl:'Tendencia',                               sub:$('k-trend-sub')?.textContent||'' },
+    { val:$('k-rank')?.textContent    ||'—', lbl:'Ranking nacional',                        sub:`de ${$('k-total-cats')?.textContent||'—'} categorías` },
+  ];
+  const kW = Math.floor((W - PAD*2) / kpiData.length);
+  kpiData.forEach((k,i) => {
+    const kx = PAD + i*kW;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(kx, kpiTopY, kW-6, kpiH);
+    ctx.fillStyle = '#0D2B3C'; ctx.font='700 50px Fraunces, Georgia, serif';
+    ctx.textAlign='left'; ctx.fillText(k.val, kx+18, kpiTopY+56);
+    ctx.fillStyle='#4A6880'; ctx.font='500 19px DM Sans, sans-serif';
+    ctx.fillText(k.lbl.toUpperCase(), kx+18, kpiTopY+82);
+    ctx.fillStyle='#8AACBF'; ctx.font='400 17px DM Mono, monospace';
+    ctx.fillText(k.sub, kx+18, kpiTopY+104);
+  });
+
+  // FOOTER
+  const footY = H - 108;
+  ctx.fillStyle = '#D4C8B0';
+  ctx.fillRect(PAD, footY, W-PAD*2, 1);
+  ctx.fillStyle='#4A6880'; ctx.font='400 20px DM Mono, monospace'; ctx.textAlign='left';
+  ctx.fillText('Fuente: Fiscalía General de la Nación · datos.gov.co · Población: DANE CNPV 2018', PAD, footY+32);
+  ctx.fillStyle='#0D2B3C'; ctx.font='600 21px DM Mono, monospace'; ctx.textAlign='right';
+  ctx.fillText('colombiaendatos.vercel.app', W-PAD, footY+32);
+  ctx.fillStyle='#8AACBF'; ctx.font='400 18px DM Mono, monospace'; ctx.textAlign='left';
+  ctx.fillText(`${new Date().getFullYear()} · Colombia en Datos`, PAD, footY+62);
+
+  // DESCARGAR
+  const slug = (_selectActual.nombre||'delito').toLowerCase().replace(/[^a-z0-9]/g,'-').slice(0,28);
+  const a = document.createElement('a');
+  a.download = `colombia-datos-${slug}-${tipo}.png`;
+  a.href = out.toDataURL('image/png', 1.0);
+  a.click();
+
+  if (btn) {
+    btn.classList.remove('loading');
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Exportar IG`;
+  }
+}
+
+function wrapTextIG(ctx, text, x, y, maxW, lineH) {
+  const words = text.split(' ');
+  let line='', curY=y;
+  for (const w of words) {
+    const test = line+w+' ';
+    if (ctx.measureText(test).width > maxW && line) {
+      ctx.fillText(line.trim(), x, curY);
+      line = w+' '; curY += lineH;
+    } else { line = test; }
+  }
+  ctx.fillText(line.trim(), x, curY);
+  return curY;
+}
+
 init();
 </script>
 </body>
