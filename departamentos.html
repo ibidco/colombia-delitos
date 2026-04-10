@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Por Departamento — Colombia en Datos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;0,9..144,900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:   #F5EDD6;
+      --white:   #FFFFFF;
+      --navy:    #0D2B3C;
+      --muted:   #4A6880;
+      --light:   #8AACBF;
+      --border:  #D4C8B0;
+      --border2: #E8E4D8;
+      --red:     #C41E1E;
+      --green:   #1A7A40;
+      --teal:    #2A8A7A;   /* color principal de los gráficos, como en la imagen */
+      --teal-bg: #D0EAE6;   /* relleno suave */
+      --font-head: 'Fraunces', Georgia, serif;
+      --font-body: 'DM Sans', system-ui, sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    body {
+      background: var(--cream);
+      color: var(--navy);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ──────────────────────────────────────── */
+    .site-nav {
+      background: var(--navy); padding: 0 40px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .site-nav-inner {
+      max-width: 1400px; margin: 0 auto;
+      display: flex; align-items: stretch;
+    }
+    .nav-brand {
+      font-family: var(--font-head); font-size: 1.05rem; font-weight: 700;
+      color: var(--cream); padding: 14px 24px 14px 0; margin-right: 8px;
+      border-right: 1px solid #1e4a62; white-space: nowrap;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .nav-brand .flag { display: inline-flex; gap: 2px; align-items: center; }
+    .nav-brand .flag span { display: inline-block; width: 6px; height: 14px; border-radius: 1px; }
+    .nav-link {
+      padding: 0 18px; font-size: 0.78rem; font-weight: 500;
+      color: var(--light); text-decoration: none;
+      border-bottom: 2px solid transparent;
+      display: flex; align-items: center;
+      transition: color .2s, border-color .2s;
+    }
+    .nav-link:hover  { color: var(--cream); }
+    .nav-link.active { color: var(--cream); border-color: var(--cream); }
+
+    /* ── HEADER ───────────────────────────────────── */
+    header {
+      background: var(--navy);
+      padding: 40px 40px 36px;
+      border-bottom: 3px solid var(--red);
+    }
+    .header-inner {
+      max-width: 1400px; margin: 0 auto;
+      display: flex; align-items: flex-end;
+      justify-content: space-between; gap: 24px; flex-wrap: wrap;
+    }
+    .header-eyebrow {
+      font-family: var(--font-mono); font-size: 0.68rem;
+      letter-spacing: .15em; text-transform: uppercase;
+      color: var(--light); margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .header-eyebrow::before {
+      content: ''; display: inline-block;
+      width: 16px; height: 2px; background: var(--red);
+    }
+    h1 {
+      font-family: var(--font-head);
+      font-size: clamp(1.8rem, 3.5vw, 3rem);
+      font-weight: 300; color: var(--cream);
+      letter-spacing: -0.02em; line-height: 1.1;
+    }
+    h1 strong { font-weight: 700; color: white; }
+    .header-sub {
+      font-size: 0.88rem; color: var(--light);
+      font-weight: 300; margin-top: 6px;
+    }
+
+    /* ── SELECTOR ─────────────────────────────────── */
+    .selector-wrap {
+      display: flex; flex-direction: column; gap: 6px;
+      min-width: 280px;
+    }
+    .selector-wrap label {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      letter-spacing: .1em; text-transform: uppercase; color: var(--light);
+    }
+    #depto-select {
+      background: rgba(255,255,255,.1);
+      border: 1.5px solid rgba(255,255,255,.2);
+      color: var(--cream); padding: 10px 14px;
+      font-family: var(--font-body); font-size: 0.9rem; font-weight: 500;
+      outline: none; appearance: none; border-radius: 2px;
+      transition: border-color .2s, background .2s;
+    }
+    #depto-select:focus {
+      border-color: var(--cream);
+      background: rgba(255,255,255,.15);
+    }
+    #depto-select option { background: var(--navy); color: var(--cream); }
+
+    /* ── LEYENDA / CONTEXTO ───────────────────────── */
+    .context-bar {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 40px;
+      display: none;
+      align-items: center; gap: 28px; flex-wrap: wrap;
+    }
+    .context-bar.visible { display: flex; }
+    .ctx-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.8rem; color: var(--muted); font-weight: 400;
+    }
+    .ctx-item strong { color: var(--navy); font-weight: 600; }
+    .ctx-line { width: 28px; height: 2px; border-radius: 1px; }
+    .ctx-line.dashed {
+      background: repeating-linear-gradient(90deg, var(--red) 0, var(--red) 4px, transparent 4px, transparent 8px);
+      height: 0; border-top: 2px dashed var(--red);
+    }
+    .ctx-sort {
+      margin-left: auto; display: flex; align-items: center; gap: 8px;
+    }
+    .ctx-sort label {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+    }
+    .sort-btns { display: flex; border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+    .sort-btn {
+      padding: 5px 12px; font-family: var(--font-body); font-size: 0.72rem;
+      font-weight: 500; background: none; border: none;
+      color: var(--muted); cursor: pointer;
+      transition: background .12s, color .12s;
+    }
+    .sort-btn.active { background: var(--navy); color: white; }
+    .sort-btn:not(.active):hover { background: var(--cream); }
+
+    /* ── MAIN ─────────────────────────────────────── */
+    main {
+      max-width: 1400px; margin: 0 auto;
+      padding: 32px 40px 80px;
+    }
+
+    /* ── ESTADO VACÍO ─────────────────────────────── */
+    #empty-state {
+      text-align: center; padding: 80px 40px;
+    }
+    .empty-icon { font-size: 3rem; margin-bottom: 16px; opacity: .4; }
+    .empty-title {
+      font-family: var(--font-head); font-size: 1.6rem; font-weight: 600;
+      color: var(--navy); margin-bottom: 8px;
+    }
+    .empty-sub { font-size: 0.88rem; color: var(--muted); }
+
+    /* ── GRID DE SMALL MULTIPLES ──────────────────── */
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 20px 24px;
+    }
+    @media (max-width: 1200px) { #grid { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width:  900px) { #grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width:  600px) { #grid { grid-template-columns: repeat(2, 1fr); } }
+
+    /* ── SMALL MULTIPLE CARD ──────────────────────── */
+    .sm-card {
+      background: transparent;
+      animation: up .25s ease both;
+    }
+    @keyframes up {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Título del delito — encima del gráfico */
+    .sm-title {
+      font-family: var(--font-body); font-size: 0.78rem;
+      font-weight: 600; color: var(--navy);
+      margin-bottom: 6px; line-height: 1.3;
+      min-height: 2.1em;
+    }
+
+    /* Contenedor del gráfico */
+    .sm-chart-wrap {
+      position: relative;
+      height: 110px;
+      background: var(--white);
+      border: 1px solid var(--border2);
+    }
+
+    /* Línea de referencia del peak nacional */
+    .sm-chart-wrap canvas { display: block; }
+
+    /* Footer del card */
+    .sm-foot {
+      display: flex; justify-content: space-between;
+      align-items: center;
+      margin-top: 5px;
+    }
+    .sm-years {
+      font-family: var(--font-mono); font-size: 0.62rem;
+      color: var(--muted);
+    }
+    .sm-tasa {
+      font-family: var(--font-mono); font-size: 0.68rem;
+      font-weight: 500;
+    }
+    .sm-tasa.up   { color: var(--red); }
+    .sm-tasa.down { color: var(--green); }
+    .sm-tasa.flat { color: var(--muted); }
+
+    /* ── SKELETON ─────────────────────────────────── */
+    .skel-card { background: transparent; }
+    .skel-title {
+      height: 14px; width: 80%; margin-bottom: 6px;
+      background: linear-gradient(90deg, var(--border2) 25%, #EAE4D8 50%, var(--border2) 75%);
+      background-size: 200%; animation: shimmer 1.4s infinite; border-radius: 2px;
+    }
+    .skel-chart {
+      height: 110px;
+      background: linear-gradient(90deg, var(--border2) 25%, #EAE4D8 50%, var(--border2) 75%);
+      background-size: 200%; animation: shimmer 1.4s infinite;
+      border: 1px solid var(--border2);
+    }
+    @keyframes shimmer { from{background-position:200% 0} to{background-position:-200% 0} }
+
+    /* ── FOOTER ───────────────────────────────────── */
+    footer {
+      background: var(--navy); color: var(--light);
+      padding: 18px 40px; text-align: center;
+      font-family: var(--font-mono); font-size: .65rem;
+    }
+    footer a { color: var(--cream); text-decoration: none; }
+    footer strong { color: white; }
+
+    @media (max-width: 640px) {
+      header, main { padding-left: 20px; padding-right: 20px; }
+      .site-nav, .context-bar { padding-left: 20px; padding-right: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="site-nav">
+  <div class="site-nav-inner">
+    <div class="nav-brand">
+      <div class="flag">
+        <span style="background:#F5C842"></span>
+        <span style="background:#0D2B3C;border:1px solid #2a5a7a"></span>
+        <span style="background:#C41E1E"></span>
+      </div>
+      Colombia en Datos
+    </div>
+    <a class="nav-link" href="index.html">Buscador</a>
+    <a class="nav-link" href="dashboard.html">Todos los delitos</a>
+    <a class="nav-link" href="rankings.html">Rankings</a>
+    <a class="nav-link active" href="departamentos.html">Por departamento</a>
+  </div>
+</nav>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="header-eyebrow">Fiscalía General · DANE · Colombia</div>
+      <h1>Delitos por<br><strong id="header-depto">departamento</strong></h1>
+      <p class="header-sub">Todas las categorías de delito · tasa por 100,000 habitantes</p>
+    </div>
+    <div class="selector-wrap">
+      <label>Selecciona un departamento</label>
+      <select id="depto-select">
+        <option value="">Cargando…</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<!-- BARRA DE CONTEXTO -->
+<div class="context-bar" id="context-bar">
+  <div class="ctx-item">
+    <div class="ctx-line" style="background:var(--teal)"></div>
+    <span>Tasa del departamento</span>
+  </div>
+  <div class="ctx-item">
+    <div class="ctx-line dashed"></div>
+    <span>Peak histórico del departamento</span>
+  </div>
+  <div class="ctx-item">
+    Punto rojo <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin:0 4px"></span> = peak
+  </div>
+  <div class="ctx-sort">
+    <label>Ordenar por</label>
+    <div class="sort-btns">
+      <button class="sort-btn active" id="sort-tasa"    onclick="setSorteo('tasa')">Mayor tasa</button>
+      <button class="sort-btn"        id="sort-nombre"  onclick="setSorteo('nombre')">A–Z</button>
+      <button class="sort-btn"        id="sort-tendencia" onclick="setSorteo('tendencia')">Tendencia</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main>
+  <div id="empty-state">
+    <div class="empty-icon">🗺</div>
+    <div class="empty-title">Selecciona un departamento</div>
+    <div class="empty-sub">Verás todas las categorías de delito con su evolución histórica ajustada por 100,000 habitantes</div>
+  </div>
+  <div id="grid" style="display:none"></div>
+</main>
+
+<footer>
+  Creado por <strong>Ivan Felipe Agudelo</strong>
+  &nbsp;·&nbsp;
+  <a href="https://www.datos.gov.co/Justicia-y-Derecho/Conteo-de-V-ctimas-V2/4mnf-va5w" target="_blank">Conteo de Víctimas V2</a>
+  &nbsp;·&nbsp; Fiscalía General · DANE
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmtT = n => n != null ? n.toFixed(1) : '—';
+
+// Paleta
+const TEAL     = '#2A8A7A';
+const TEAL_BG  = 'rgba(42,138,122,0.15)';
+const RED      = '#C41E1E';
+const NAVY     = '#0D2B3C';
+const MUTED    = '#4A6880';
+const GRID_C   = '#E8E4D8';
+
+// Datos
+let DATA_DEPTO = {};   // { grupo_delito: [{depto, tasaPorAnio, ...}] }
+let SORTEO = 'tasa';
+let DEPTO_SEL = '';
+const CHARTS = {};
+
+// ── INIT ───────────────────────────────────────────────────────
+async function init() {
+  try {
+    const res  = await fetch('data_depto.json');
+    const json = await res.json();
+    DATA_DEPTO = json.datos || {};
+    poblarSelector();
+  } catch(e) {
+    console.error(e);
+    $('empty-state').querySelector('.empty-sub').textContent = 'Error cargando datos.';
+  }
+}
+
+// ── SELECTOR ───────────────────────────────────────────────────
+function poblarSelector() {
+  // Recoger todos los departamentos únicos
+  const deptoSet = new Set();
+  for (const lista of Object.values(DATA_DEPTO)) {
+    for (const d of lista) {
+      if (d.tasaPorAnio && Object.keys(d.tasaPorAnio).length > 0) {
+        deptoSet.add(d.depto);
+      }
+    }
+  }
+  const deptos = [...deptoSet].sort((a,b) => a.localeCompare(b, 'es'));
+
+  const sel = $('depto-select');
+  sel.innerHTML = '<option value="">— Elige un departamento —</option>' +
+    deptos.map(d => `<option value="${d}">${d}</option>`).join('');
+  sel.addEventListener('change', () => {
+    DEPTO_SEL = sel.value;
+    if (DEPTO_SEL) renderDepto(DEPTO_SEL);
+    else showEmpty();
+  });
+}
+
+function showEmpty() {
+  $('empty-state').style.display = 'block';
+  $('grid').style.display = 'none';
+  $('context-bar').classList.remove('visible');
+  $('header-depto').textContent = 'departamento';
+}
+
+// ── SORTEO ─────────────────────────────────────────────────────
+function setSorteo(tipo) {
+  SORTEO = tipo;
+  ['tasa','nombre','tendencia'].forEach(k => {
+    $('sort-'+k).classList.toggle('active', k === tipo);
+  });
+  if (DEPTO_SEL) renderDepto(DEPTO_SEL);
+}
+
+// ── RENDER PRINCIPAL ───────────────────────────────────────────
+function renderDepto(depto) {
+  $('header-depto').textContent = depto;
+  $('empty-state').style.display = 'none';
+  $('context-bar').classList.add('visible');
+
+  const grid = $('grid');
+  grid.style.display = 'grid';
+
+  // Destruir charts anteriores
+  Object.keys(CHARTS).forEach(id => {
+    if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; }
+  });
+
+  // Mostrar skeletons mientras procesamos
+  grid.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const sk = document.createElement('div');
+    sk.className = 'skel-card';
+    sk.innerHTML = `<div class="skel-title"></div><div class="skel-chart"></div>`;
+    grid.appendChild(sk);
+  }
+
+  // Recoger datos de este departamento para todos los delitos
+  const registros = [];
+  for (const [grupo, lista] of Object.entries(DATA_DEPTO)) {
+    const entry = lista.find(d => d.depto === depto);
+    if (!entry || !entry.tasaPorAnio || Object.keys(entry.tasaPorAnio).length < 2) continue;
+
+    const anios  = Object.keys(entry.tasaPorAnio).map(Number).sort((a,b) => a-b);
+    const tasas  = anios.map(y => entry.tasaPorAnio[y]);
+    const maxTasa = Math.max(...tasas);
+    const peakIdx = tasas.indexOf(maxTasa);
+    const lastTasa = tasas.at(-1);
+    const prevTasa = tasas.at(-2);
+    const tendencia = prevTasa ? ((lastTasa - prevTasa) / prevTasa * 100) : 0;
+
+    registros.push({
+      grupo, anios, tasas, maxTasa, peakIdx,
+      lastTasa, tendencia,
+      totalTasa: entry.totalTasa || maxTasa,
+    });
+  }
+
+  if (!registros.length) {
+    grid.innerHTML = '<p style="color:var(--muted);font-style:italic;grid-column:1/-1;padding:32px 0">Sin datos de tasa para este departamento.</p>';
+    return;
+  }
+
+  // Ordenar
+  const sorted = [...registros].sort((a, b) => {
+    if (SORTEO === 'nombre')    return a.grupo.localeCompare(b.grupo, 'es');
+    if (SORTEO === 'tendencia') return b.tendencia - a.tendencia;
+    return (b.totalTasa || 0) - (a.totalTasa || 0); // 'tasa'
+  });
+
+  // Escala global compartida (para comparabilidad entre delitos)
+  // No usamos escala global — cada chart tiene su propia escala para legibilidad
+  // (igual que en la imagen de referencia)
+
+  grid.innerHTML = '';
+
+  sorted.forEach((r, i) => {
+    const cid = `sm-${i}`;
+    const tClass = r.tendencia > 5 ? 'up' : r.tendencia < -5 ? 'down' : 'flat';
+    const tLabel = r.tendencia > 5
+      ? `▲ +${Math.abs(r.tendencia).toFixed(0)}%`
+      : r.tendencia < -5
+        ? `▼ ${Math.abs(r.tendencia).toFixed(0)}%`
+        : '—';
+
+    const card = document.createElement('div');
+    card.className = 'sm-card';
+    card.style.animationDelay = `${Math.min(i * 0.03, 0.3)}s`;
+    card.innerHTML = `
+      <div class="sm-title">${r.grupo}</div>
+      <div class="sm-chart-wrap">
+        <canvas id="${cid}"></canvas>
+      </div>
+      <div class="sm-foot">
+        <span class="sm-years">${r.anios[0]} – ${r.anios.at(-1)}</span>
+        <span class="sm-tasa ${tClass}">${tLabel}</span>
+      </div>
+    `;
+    grid.appendChild(card);
+
+    requestAnimationFrame(() => drawSmall(cid, r));
+  });
+}
+
+// ── DIBUJAR SMALL MULTIPLE ─────────────────────────────────────
+function drawSmall(id, r) {
+  const el = $(id);
+  if (!el) return;
+  if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; }
+
+  const ctx = el.getContext('2d');
+
+  // Punto rojo solo en el peak
+  const pointRadius = r.tasas.map((_,i) => i === r.peakIdx ? 4 : 0);
+  const pointColor  = r.tasas.map((_,i) => i === r.peakIdx ? RED : TEAL);
+
+  // Calcular min/max para padding visual
+  const maxVal = Math.max(...r.tasas);
+  const minVal = Math.min(...r.tasas);
+  const pad    = (maxVal - minVal) * 0.15 || maxVal * 0.1 || 1;
+
+  // Línea de referencia del peak (línea punteada roja horizontal)
+  const peakPlugin = {
+    id: 'peakLine',
+    afterDraw(chart) {
+      const { ctx: c, chartArea, scales } = chart;
+      const yPeak = scales.y.getPixelForValue(maxVal);
+      c.save();
+      c.setLineDash([4, 4]);
+      c.strokeStyle = RED;
+      c.lineWidth   = 1;
+      c.globalAlpha = 0.55;
+      c.beginPath();
+      c.moveTo(chartArea.left, yPeak);
+      c.lineTo(chartArea.right, yPeak);
+      c.stroke();
+      c.restore();
+    },
+  };
+
+  CHARTS[id] = new Chart(ctx, {
+    type: 'line',
+    plugins: [peakPlugin],
+    data: {
+      labels: r.anios,
+      datasets: [{
+        data:            r.tasas,
+        borderColor:     TEAL,
+        borderWidth:     1.5,
+        backgroundColor: TEAL_BG,
+        fill:            true,
+        tension:         0,          // stepped look como en la imagen
+        stepped:         false,      // suave pero sin curva
+        pointRadius,
+        pointHoverRadius:     r.tasas.map((_,i) => i===r.peakIdx ? 6 : 3),
+        pointBackgroundColor: pointColor,
+        pointBorderColor:     pointColor,
+        pointBorderWidth:     1.5,
+      }],
+    },
+    options: {
+      responsive:          true,
+      maintainAspectRatio: false,
+      animation:           { duration: 400 },
+      plugins: {
+        legend:  { display: false },
+        tooltip: {
+          backgroundColor: '#fff',
+          borderColor:     GRID_C,
+          borderWidth:     1,
+          titleColor:      MUTED,
+          bodyColor:       NAVY,
+          padding:         8,
+          bodyFont:  { family: 'DM Sans', size: 11, weight: '600' },
+          titleFont: { family: 'DM Sans', size: 10 },
+          callbacks: {
+            title: items => `Año ${items[0].label}`,
+            label: c => ` ${c.parsed.y.toFixed(2)} /100k hab.${c.dataIndex===r.peakIdx?' ← peak':''}`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid:   { display: false },
+          border: { display: false },
+          ticks: {
+            color:  MUTED,
+            font:   { family: 'DM Sans', size: 9 },
+            // Solo mostrar primer y último año — igual que la imagen
+            maxTicksLimit: 2,
+            maxRotation:   0,
+            callback(val, i, ticks) {
+              if (i === 0 || i === ticks.length - 1) return this.getLabelForValue(val);
+              return '';
+            },
+          },
+        },
+        y: {
+          grid: {
+            color:     GRID_C,
+            lineWidth: 0.8,
+            drawTicks: false,
+          },
+          border:  { display: false },
+          // Sin etiquetas en el eje Y — el tooltip lo da al hacer hover
+          ticks:   { display: false },
+          min:     Math.max(0, minVal - pad),
+          max:     maxVal + pad,
+        },
+      },
+    },
+  });
+}
+
+init();
+</script>
+</body>
+</html>
