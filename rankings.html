@@ -75,10 +75,10 @@
     .rank-item:hover{background:#F8F5EE;}
     .rank-medal{font-size:1rem;flex-shrink:0;width:22px;text-align:center;}
     .rank-name{font-size:0.82rem;color:var(--navy);flex:1;font-weight:500;}
-    .rank-bar-col{width:70px;flex-shrink:0;}
-    .rank-bar-track{height:4px;background:var(--border2);}
-    .rank-bar-fill{height:4px;border-radius:1px;}
-    .rank-val{font-family:var(--font-mono);font-size:0.72rem;white-space:nowrap;text-align:right;min-width:60px;font-weight:500;}
+    .rank-bar-col{width:70px;flex-shrink:0;overflow:hidden;}
+    .rank-bar-track{height:4px;background:var(--border2);overflow:hidden;border-radius:1px;}
+    .rank-bar-fill{height:4px;border-radius:1px;max-width:100%;}
+    .rank-val{font-family:var(--font-mono);font-size:0.72rem;white-space:nowrap;text-align:right;min-width:72px;font-weight:500;flex-shrink:0;}
 
     /* GENDER */
     .gender-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;}
