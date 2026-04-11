@@ -316,15 +316,22 @@ let FILTRO = '';
 
 async function init() {
   try {
-    const res  = await fetch('data_depto.json');
+    const res = await fetch('data_depto.json');
+    if (!res.ok) throw new Error(`HTTP ${res.status} al cargar data_depto.json`);
     const json = await res.json();
     DATA_DEPTO = json.datos || {};
+    const nGrupos = Object.keys(DATA_DEPTO).length;
+    if (!nGrupos) throw new Error('json.datos está vacío — revisa que descargar.py generó data_depto.json con la clave "datos"');
     construirTabla();
-    renderTabla(DEPTOS_ALL);
+    renderTabla(TABLA);
     bindSearch();
   } catch(e) {
-    document.getElementById('table-wrap').innerHTML =
-      '<div style="padding:40px;text-align:center;color:#C41E1E">Error cargando datos.</div>';
+    document.getElementById('table-wrap').innerHTML = `
+      <div style="padding:40px;text-align:center">
+        <div style="color:#C41E1E;font-weight:600;font-size:.9rem;margin-bottom:8px">Error cargando datos</div>
+        <div style="color:#4A6880;font-family:monospace;font-size:.75rem">${e.message}</div>
+      </div>`;
+    console.error('Vista360 error:', e);
   }
 }
 
