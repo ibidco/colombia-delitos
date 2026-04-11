@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vista 360 — Colombia en Datos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:   #F5EDD6;
+      --white:   #FFFFFF;
+      --navy:    #0D2B3C;
+      --muted:   #4A6880;
+      --light:   #8AACBF;
+      --border:  #D4C8B0;
+      --border2: #E8E4D8;
+      --red:     #C41E1E;
+      --font-head: 'Fraunces', Georgia, serif;
+      --font-body: 'DM Sans', system-ui, sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    body {
+      background: var(--cream);
+      color: var(--navy);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    .site-nav { background: var(--navy); padding: 0 40px; position: sticky; top: 0; z-index: 100; }
+    .site-nav-inner { max-width: 1600px; margin: 0 auto; display: flex; align-items: stretch; }
+    .nav-brand {
+      font-family: var(--font-head); font-size: 1.05rem; font-weight: 700;
+      color: var(--cream); padding: 14px 24px 14px 0; margin-right: 8px;
+      border-right: 1px solid #1e4a62; white-space: nowrap;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .nav-brand .flag { display: inline-flex; gap: 2px; }
+    .nav-brand .flag span { display: inline-block; width: 6px; height: 14px; border-radius: 1px; }
+    .nav-link {
+      padding: 0 16px; font-size: 0.78rem; font-weight: 500; color: var(--light);
+      text-decoration: none; border-bottom: 2px solid transparent;
+      display: flex; align-items: center; transition: color .2s, border-color .2s;
+    }
+    .nav-link:hover  { color: var(--cream); }
+    .nav-link.active { color: var(--cream); border-color: var(--cream); }
+
+    /* HEADER */
+    header { background: var(--navy); padding: 36px 40px 32px; border-bottom: 3px solid var(--red); }
+    .header-inner { max-width: 1600px; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+    .header-eyebrow {
+      font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: .15em;
+      text-transform: uppercase; color: var(--light); margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .header-eyebrow::before { content:''; display:inline-block; width:16px; height:2px; background:var(--red); }
+    h1 { font-family: var(--font-head); font-size: clamp(1.6rem,3vw,2.6rem); font-weight: 300; color: var(--cream); letter-spacing: -0.02em; line-height: 1.1; }
+    h1 strong { font-weight: 700; color: white; }
+    .header-sub { font-size: 0.85rem; color: var(--light); margin-top: 6px; }
+
+    /* LEYENDA */
+    .legend-bar {
+      display: flex; align-items: center; gap: 8px;
+      flex-shrink: 0;
+    }
+    .legend-bar span { font-family: var(--font-mono); font-size: 0.65rem; color: var(--light); }
+    .legend-gradient {
+      width: 140px; height: 12px; border-radius: 2px;
+      background: linear-gradient(to right, #1A7A40, #F5EDD6, #C41E1E);
+    }
+
+    /* MAIN */
+    main { max-width: 1600px; margin: 0 auto; padding: 24px 40px 80px; }
+
+    /* CONTROLES */
+    .controls {
+      display: flex; align-items: center; gap: 16px;
+      margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .ctrl-label {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+    }
+    .search-depto {
+      background: var(--white); border: 1px solid var(--border);
+      color: var(--navy); padding: 7px 12px;
+      font-family: var(--font-body); font-size: 0.82rem;
+      outline: none; border-radius: 2px; width: 200px;
+    }
+    .search-depto:focus { border-color: var(--navy); }
+    .count-badge {
+      font-family: var(--font-mono); font-size: 0.68rem;
+      color: var(--muted); margin-left: auto;
+    }
+
+    /* TABLA CONTENEDOR */
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      background: var(--white);
+      /* Sombra sutil para indicar scroll horizontal */
+      box-shadow: inset -8px 0 16px -8px rgba(13,43,60,.08);
+    }
+    .table-wrap::-webkit-scrollbar { height: 6px; }
+    .table-wrap::-webkit-scrollbar-track { background: var(--border2); }
+    .table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    table {
+      border-collapse: collapse;
+      min-width: 100%;
+      font-size: 0.72rem;
+    }
+
+    /* CABECERA */
+    thead th {
+      background: var(--navy);
+      color: var(--cream);
+      padding: 0;
+      border-right: 1px solid #1e4a62;
+      vertical-align: bottom;
+      white-space: nowrap;
+      position: sticky; top: 0; z-index: 10;
+    }
+    thead th:first-child {
+      position: sticky; left: 0; z-index: 20;
+      background: var(--navy);
+      min-width: 160px; max-width: 160px;
+    }
+
+    /* Texto del header rotado */
+    .th-inner {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      height: 130px;
+      padding: 8px 4px 10px;
+    }
+    .th-inner span {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--light);
+      line-height: 1;
+      max-height: 110px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    thead th:first-child .th-inner {
+      writing-mode: horizontal-tb;
+      text-orientation: initial;
+      transform: none;
+      height: auto;
+      padding: 14px 16px;
+      justify-content: flex-start;
+    }
+    thead th:first-child .th-inner span {
+      writing-mode: horizontal-tb;
+      transform: none;
+      font-size: 0.65rem;
+      color: var(--light);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    /* FILAS */
+    tbody tr {
+      border-bottom: 1px solid var(--border2);
+      transition: outline .1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { outline: 2px solid var(--navy); outline-offset: -1px; z-index: 5; position: relative; }
+
+    /* CELDA DE DEPARTAMENTO */
+    td.td-depto {
+      position: sticky; left: 0; z-index: 5;
+      background: var(--white);
+      border-right: 2px solid var(--border);
+      padding: 8px 14px;
+      font-weight: 600; font-size: 0.78rem;
+      white-space: nowrap;
+      min-width: 160px; max-width: 160px;
+      color: var(--navy);
+    }
+    tbody tr:hover td.td-depto { background: #F0EBE0; }
+
+    /* CELDA DE DATO */
+    td.td-val {
+      padding: 0;
+      text-align: center;
+      border-right: 1px solid rgba(255,255,255,.25);
+      min-width: 64px;
+      cursor: default;
+      transition: outline .1s;
+    }
+    td.td-val:last-child { border-right: none; }
+
+    .cell-inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 36px;
+      padding: 0 6px;
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 500;
+      color: rgba(13,43,60,0.75);
+      white-space: nowrap;
+    }
+
+    /* SIN DATO */
+    .cell-nodata { color: rgba(13,43,60,.25); font-size: 0.55rem; }
+
+    /* TOOLTIP */
+    #tooltip {
+      position: fixed; z-index: 1000;
+      background: var(--navy); color: var(--cream);
+      padding: 10px 14px; border-radius: 2px;
+      font-family: var(--font-mono); font-size: 0.68rem;
+      pointer-events: none; display: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,.2);
+      max-width: 220px; line-height: 1.5;
+    }
+    #tooltip strong { color: white; display: block; margin-bottom: 3px; font-family: var(--font-body); font-size: 0.75rem; }
+    #tooltip .tt-delito { color: var(--light); font-size: 0.62rem; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+    #tooltip .tt-val  { font-size: 0.85rem; color: white; font-weight: 600; }
+    #tooltip .tt-rank { color: var(--light); font-size: 0.6rem; margin-top: 3px; }
+
+    /* SKELETON */
+    .skel-row { display: flex; gap: 4px; margin-bottom: 4px; }
+    .skel-cell { height: 36px; background: linear-gradient(90deg,var(--border2) 25%,#EAE4D8 50%,var(--border2) 75%); background-size:200%; animation:shimmer 1.4s infinite; flex:1; }
+    @keyframes shimmer { from{background-position:200% 0} to{background-position:-200% 0} }
+
+    /* FOOTER */
+    footer { background: var(--navy); color: var(--light); padding: 18px 40px; text-align: center; font-family: var(--font-mono); font-size: .65rem; }
+    footer a { color: var(--cream); text-decoration: none; }
+    footer strong { color: white; }
+
+    @media (max-width: 640px) {
+      header, main { padding-left: 16px; padding-right: 16px; }
+      .site-nav { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="site-nav-inner">
+    <div class="nav-brand">
+      <div class="flag">
+        <span style="background:#F5C842"></span>
+        <span style="background:#0D2B3C;border:1px solid #2a5a7a"></span>
+        <span style="background:#C41E1E"></span>
+      </div>
+      Colombia en Datos
+    </div>
+    <a class="nav-link" href="index.html">Buscador</a>
+    <a class="nav-link" href="dashboard.html">Todos los delitos</a>
+    <a class="nav-link" href="rankings.html">Rankings</a>
+    <a class="nav-link" href="departamentos.html">Por departamento</a>
+    <a class="nav-link active" href="vista360.html">Vista 360</a>
+  </div>
+</nav>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="header-eyebrow">Todos los departamentos · Todos los delitos</div>
+      <h1>Vista <strong>360°</strong></h1>
+      <p class="header-sub">Tasa del último año por 100,000 hab. · rojo = mayor tasa · verde = menor tasa · relativo por delito</p>
+    </div>
+    <div class="legend-bar">
+      <span>Menor</span>
+      <div class="legend-gradient"></div>
+      <span>Mayor</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="controls">
+    <span class="ctrl-label">Filtrar departamento</span>
+    <input type="text" id="search-depto" class="search-depto" placeholder="Ej: Bogotá, Antioquia…">
+    <span class="count-badge" id="count-badge"></span>
+  </div>
+
+  <div class="table-wrap" id="table-wrap">
+    <div style="padding:40px;text-align:center;color:var(--muted);font-style:italic">Cargando datos…</div>
+  </div>
+</main>
+
+<div id="tooltip"></div>
+
+<footer>
+  Creado por <strong>Ivan Felipe Agudelo</strong>
+  &nbsp;·&nbsp;
+  <a href="https://www.datos.gov.co/Justicia-y-Derecho/Conteo-de-V-ctimas-V2/4mnf-va5w" target="_blank">Conteo de Víctimas V2</a>
+  &nbsp;·&nbsp; Fiscalía General · DANE
+</footer>
+
+<script>
+// ── DATOS ──────────────────────────────────────────────────────
+let DATA_DEPTO = {};    // { grupo: [{depto, tasaPorAnio, totalTasa, ultimoAnio}] }
+let TABLA = [];         // filas calculadas
+let DELITOS = [];       // columnas ordenadas
+let DEPTOS_ALL = [];    // todos los departamentos
+let FILTRO = '';
+
+async function init() {
+  try {
+    const res  = await fetch('data_depto.json');
+    const json = await res.json();
+    DATA_DEPTO = json.datos || {};
+    construirTabla();
+    renderTabla(DEPTOS_ALL);
+    bindSearch();
+  } catch(e) {
+    document.getElementById('table-wrap').innerHTML =
+      '<div style="padding:40px;text-align:center;color:#C41E1E">Error cargando datos.</div>';
+  }
+}
+
+// ── CONSTRUIR ESTRUCTURA ───────────────────────────────────────
+function construirTabla() {
+  // 1. Recoger todos los departamentos únicos
+  const deptoSet = new Set();
+  for (const lista of Object.values(DATA_DEPTO)) {
+    for (const d of lista) {
+      if (d.tasaPorAnio && Object.keys(d.tasaPorAnio).length > 0) {
+        deptoSet.add(d.depto);
+      }
+    }
+  }
+  DEPTOS_ALL = [...deptoSet].sort((a,b) => a.localeCompare(b, 'es'));
+
+  // 2. Calcular tasa nacional de cada delito (suma de todos los deptos)
+  //    para ordenar columnas de mayor a menor
+  const tasaNacional = {};
+  for (const [grupo, lista] of Object.entries(DATA_DEPTO)) {
+    const total = lista.reduce((s, d) => s + (d.totalTasa || 0), 0);
+    tasaNacional[grupo] = total;
+  }
+
+  // 3. Ordenar delitos de mayor a menor tasa nacional
+  DELITOS = Object.keys(DATA_DEPTO)
+    .filter(g => DATA_DEPTO[g].some(d => d.tasaPorAnio && Object.keys(d.tasaPorAnio).length > 0))
+    .sort((a,b) => (tasaNacional[b]||0) - (tasaNacional[a]||0));
+
+  // 4. Para cada delito, calcular min/max del último año (para la escala de color por columna)
+  const colStats = {};
+  for (const grupo of DELITOS) {
+    const vals = [];
+    for (const d of (DATA_DEPTO[grupo] || [])) {
+      const anios = Object.keys(d.tasaPorAnio || {}).map(Number).sort((a,b)=>a-b);
+      if (!anios.length) continue;
+      const v = d.tasaPorAnio[anios.at(-1)];
+      if (v != null) vals.push(v);
+    }
+    const mn = Math.min(...vals);
+    const mx = Math.max(...vals);
+    colStats[grupo] = { min: mn, max: mx, range: mx - mn };
+  }
+
+  // 5. Construir índice rápido: { grupo: { depto: { valor, ultimoAnio, rank } } }
+  const idx = {};
+  for (const grupo of DELITOS) {
+    idx[grupo] = {};
+    const lista = DATA_DEPTO[grupo] || [];
+    // Ordenar por tasa para calcular rank
+    const conTasa = lista
+      .map(d => {
+        const anios = Object.keys(d.tasaPorAnio || {}).map(Number).sort((a,b)=>a-b);
+        const ult   = anios.at(-1);
+        return { depto: d.depto, val: ult ? d.tasaPorAnio[ult] : null, anio: ult };
+      })
+      .filter(d => d.val != null)
+      .sort((a,b) => b.val - a.val);
+
+    conTasa.forEach((d, i) => {
+      idx[grupo][d.depto] = { val: d.val, anio: d.anio, rank: i+1, total: conTasa.length };
+    });
+  }
+
+  // 6. Armar filas
+  TABLA = DEPTOS_ALL.map(depto => {
+    const celdas = {};
+    for (const grupo of DELITOS) {
+      const entry = idx[grupo][depto];
+      if (!entry) { celdas[grupo] = null; continue; }
+      const { min, range } = colStats[grupo];
+      const t = range > 0 ? (entry.val - min) / range : 0.5;
+      celdas[grupo] = { ...entry, t, color: interpolateColor(t) };
+    }
+    return { depto, celdas };
+  });
+}
+
+// ── INTERPOLACIÓN DE COLOR (verde → crema → rojo) ─────────────
+function interpolateColor(t) {
+  // t = 0 → verde oscuro, t = 0.5 → crema, t = 1 → rojo
+  const stops = [
+    [0.0,  [26, 122,  64]],   // #1A7A40 verde
+    [0.35, [180, 210, 190]],  // verde claro
+    [0.5,  [240, 235, 218]],  // crema neutro
+    [0.65, [240, 190, 160]],  // naranja claro
+    [1.0,  [196,  30,  30]],  // #C41E1E rojo
+  ];
+
+  for (let i = 0; i < stops.length - 1; i++) {
+    const [t0, c0] = stops[i];
+    const [t1, c1] = stops[i+1];
+    if (t <= t1) {
+      const f = (t - t0) / (t1 - t0);
+      const r = Math.round(c0[0] + f*(c1[0]-c0[0]));
+      const g = Math.round(c0[1] + f*(c1[1]-c0[1]));
+      const b = Math.round(c0[2] + f*(c1[2]-c0[2]));
+      return `rgb(${r},${g},${b})`;
+    }
+  }
+  return `rgb(196,30,30)`;
+}
+
+// Determinar si el texto debe ser claro u oscuro según el fondo
+function textColor(t) {
+  return (t < 0.25 || t > 0.75) ? 'rgba(255,255,255,0.9)' : 'rgba(13,43,60,0.8)';
+}
+
+// ── RENDER ─────────────────────────────────────────────────────
+function renderTabla(filas) {
+  const wrap = document.getElementById('table-wrap');
+  document.getElementById('count-badge').textContent =
+    `${filas.length} departamentos · ${DELITOS.length} categorías`;
+
+  const tbl = document.createElement('table');
+
+  // THEAD
+  const thead = document.createElement('thead');
+  const trH   = document.createElement('tr');
+
+  // Primera columna: "Departamento"
+  const th0 = document.createElement('th');
+  th0.innerHTML = `<div class="th-inner"><span>Departamento</span></div>`;
+  trH.appendChild(th0);
+
+  DELITOS.forEach(grupo => {
+    const th = document.createElement('th');
+    th.innerHTML = `<div class="th-inner"><span>${grupo}</span></div>`;
+    trH.appendChild(th);
+  });
+
+  thead.appendChild(trH);
+  tbl.appendChild(thead);
+
+  // TBODY
+  const tbody = document.createElement('tbody');
+  filas.forEach(fila => {
+    const tr = document.createElement('tr');
+
+    // Celda de departamento
+    const tdD = document.createElement('td');
+    tdD.className = 'td-depto';
+    tdD.textContent = fila.depto;
+    tr.appendChild(tdD);
+
+    DELITOS.forEach(grupo => {
+      const td = document.createElement('td');
+      td.className = 'td-val';
+      const c = fila.celdas[grupo];
+
+      if (!c) {
+        td.innerHTML = `<div class="cell-inner cell-nodata">—</div>`;
+      } else {
+        td.style.background = c.color;
+        const txt  = c.val >= 100 ? c.val.toFixed(0) : c.val.toFixed(1);
+        const color = textColor(c.t);
+        td.innerHTML = `<div class="cell-inner" style="color:${color}">${txt}</div>`;
+
+        // Tooltip
+        td.addEventListener('mouseenter', e => showTooltip(e, fila.depto, grupo, c));
+        td.addEventListener('mousemove',  e => moveTooltip(e));
+        td.addEventListener('mouseleave', hideTooltip);
+      }
+
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  tbl.appendChild(tbody);
+  wrap.innerHTML = '';
+  wrap.appendChild(tbl);
+}
+
+// ── FILTRO ─────────────────────────────────────────────────────
+function bindSearch() {
+  document.getElementById('search-depto').addEventListener('input', function() {
+    FILTRO = this.value.trim().toLowerCase();
+    const filtradas = FILTRO
+      ? TABLA.filter(f => f.depto.toLowerCase().includes(FILTRO))
+      : TABLA;
+    renderTabla(filtradas);
+  });
+}
+
+// ── TOOLTIP ────────────────────────────────────────────────────
+const tt = document.getElementById('tooltip');
+
+function showTooltip(e, depto, grupo, c) {
+  tt.innerHTML = `
+    <div class="tt-delito">${grupo}</div>
+    <strong>${depto}</strong>
+    <div class="tt-val">${c.val.toFixed(2)} <span style="font-size:.65rem;font-weight:400;color:var(--light)">/100k hab.</span></div>
+    <div class="tt-rank">Puesto #${c.rank} de ${c.total} departamentos · Año ${c.anio}</div>
+  `;
+  tt.style.display = 'block';
+  moveTooltip(e);
+}
+function moveTooltip(e) {
+  const x = e.clientX + 14;
+  const y = e.clientY - 10;
+  tt.style.left = Math.min(x, window.innerWidth - 240) + 'px';
+  tt.style.top  = Math.max(y, 8) + 'px';
+}
+function hideTooltip() { tt.style.display = 'none'; }
+
+init();
+</script>
+</body>
+</html>
