@@ -184,11 +184,17 @@
       position: sticky; left: 0; z-index: 5;
       background: var(--white);
       border-right: 2px solid var(--border);
-      padding: 8px 14px;
+      padding: 8px 14px 8px 10px;
       font-weight: 600; font-size: 0.78rem;
       white-space: nowrap;
-      min-width: 160px; max-width: 160px;
+      min-width: 180px; max-width: 180px;
       color: var(--navy);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .td-rank {
+      font-family: var(--font-mono); font-size: 0.62rem;
+      color: var(--light); font-weight: 400;
+      flex-shrink: 0; width: 24px;
     }
     tbody tr:hover td.td-depto { background: #F0EBE0; }
 
@@ -275,7 +281,7 @@
     <div>
       <div class="header-eyebrow">Todos los departamentos · Todos los delitos</div>
       <h1>Vista <strong>360°</strong></h1>
-      <p class="header-sub">Tasa del último año por 100,000 hab. · rojo = mayor tasa · verde = menor tasa · relativo por delito</p>
+      <p class="header-sub">Tasa del último año por 100,000 hab. · ordenado de peor a mejor (ranking global = promedio de posición en cada delito)</p>
     </div>
     <div class="legend-bar">
       <span>Menor</span>
@@ -399,16 +405,29 @@ function construirTabla() {
   // 6. Armar filas
   TABLA = DEPTOS_ALL.map(depto => {
     const celdas = {};
+    let sumaRanks = 0;
+    let nDelitosConDato = 0;
+
     for (const grupo of DELITOS) {
       const entry = idx[grupo][depto];
       if (!entry) { celdas[grupo] = null; continue; }
       const { min, range } = colStats[grupo];
       const t = range > 0 ? (entry.val - min) / range : 0.5;
       celdas[grupo] = { ...entry, t, color: interpolateColor(t) };
+
+      // Acumular para ranking global:
+      // rank=1 (peor) → suma baja → peor departamento
+      sumaRanks += entry.rank;
+      nDelitosConDato++;
     }
-    return { depto, celdas };
+
+    // Promedio de ranks (para que departamentos con menos datos no se beneficien)
+    const rankGlobal = nDelitosConDato > 0 ? sumaRanks / nDelitosConDato : Infinity;
+    return { depto, celdas, rankGlobal, sumaRanks, nDelitosConDato };
   });
-}
+
+  // Ordenar de peor (rankGlobal menor = más veces primero en alta tasa) a mejor
+  TABLA.sort((a, b) => a.rankGlobal - b.rankGlobal);
 
 // ── INTERPOLACIÓN DE COLOR (verde → crema → rojo) ─────────────
 function interpolateColor(t) {
@@ -454,7 +473,7 @@ function renderTabla(filas) {
 
   // Primera columna: "Departamento"
   const th0 = document.createElement('th');
-  th0.innerHTML = `<div class="th-inner"><span>Departamento</span></div>`;
+  th0.innerHTML = `<div class="th-inner"><span>Ranking · Departamento</span></div>`;
   trH.appendChild(th0);
 
   DELITOS.forEach(grupo => {
@@ -471,10 +490,14 @@ function renderTabla(filas) {
   filas.forEach(fila => {
     const tr = document.createElement('tr');
 
-    // Celda de departamento
+    // Celda de departamento con su ranking global
     const tdD = document.createElement('td');
     tdD.className = 'td-depto';
-    tdD.textContent = fila.depto;
+    const posGlobal = filas.indexOf(fila) + 1;
+    tdD.innerHTML = `
+      <span class="td-rank">#${posGlobal}</span>
+      ${fila.depto}
+    `;
     tr.appendChild(tdD);
 
     DELITOS.forEach(grupo => {
