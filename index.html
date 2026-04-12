@@ -47,10 +47,13 @@
       background: var(--navy);
       padding: 0 40px;
       position: sticky; top: 0; z-index: 100;
+      overflow-x: auto;
     }
+    .site-nav::-webkit-scrollbar { display: none; }
     .site-nav-inner {
       max-width: 1140px; margin: 0 auto;
       display: flex; align-items: stretch; gap: 0;
+      white-space: nowrap;
     }
     .nav-brand {
       font-family: var(--font-head);
@@ -479,6 +482,14 @@
       .kpi-val { font-size: 1.5rem; }
       .chips-section { padding: 20px 20px 0; }
     }
+  
+      /* Nav scrollable en móvil */
+      @media (max-width: 640px) {
+        .site-nav { padding: 0 16px; }
+        .site-nav-inner { max-width: none; }
+        .nav-brand { font-size: 0.9rem; padding-right: 16px; }
+        .nav-link  { padding: 0 13px; font-size: 0.74rem; }
+      }
   </style>
 </head>
 <body>
